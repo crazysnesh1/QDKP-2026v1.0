@@ -1,9 +1,9 @@
--- Copyright 2022 Nerget
+-- Copyright 2025 Nerget
 -- This file is a part of QDKP_V2 (see about.txt in the Addon's root folder)
 
 --        ## ENGLISH-UNITED STATES (enUS) LOCALIZATION ##
 
-QDKP2_LOC_Authors = "Thanks for using QDKP by Verrisely, Soulflayer Guild"
+QDKP2_LOC_Authors = "This version of the addon has edits and improvements from CoolSnesh, guild «The Blood» WoWCircle x100"
 
 
 --General

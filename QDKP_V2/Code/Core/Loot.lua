@@ -1,6 +1,11 @@
 -- Copyright 2010 Riccardo Belloli (belloli@email.it)
 -- This file is a part of QDKP_V2 (see about.txt in the Addon's root folder)
 
+-- Инициализация переменных если они не существуют
+QDKP2_NotLogLoots = QDKP2_NotLogLoots or {}
+QDKP2_LogLoots = QDKP2_LogLoots or {}
+QDKP2_ChargeLoots = QDKP2_ChargeLoots or {}
+
 --             ## CORE FUNCTIONS ##
 --               Loot Functions
 --
@@ -61,35 +66,39 @@ function QDKP2_OnLoot(name, item, itemQty)
         toLogRaid = true;
     end
     --Items you don't want to log (QDKP2_NotLogLoots table)
-    for i = 1, #QDKP2_NotLogLoots do
-        local Item = QDKP2_NotLogLoots[i]
-        if string.lower(Item) == string.lower(itemName) then
-            toLogPvt = false
-            toLogRaid = false
-            break
+    if QDKP2_NotLogLoots then
+        for i = 1, #QDKP2_NotLogLoots do
+            local Item = QDKP2_NotLogLoots[i]
+            if string.lower(Item) == string.lower(itemName) then
+                toLogPvt = false
+                toLogRaid = false
+                break
+            end
         end
     end
     --Items you WANT to log (QDKP2_LogLoots table)
     local LootTableLvl
-    for i = 1, #QDKP2_LogLoots do
-        local Loot = QDKP2_LogLoots[i]
-        local tologItem = Loot.item
-        if string.lower(tologItem) == string.lower(itemName) then
-            LootTableLvl = Loot.level;
-            break
+    if QDKP2_LogLoots then
+        for i = 1, #QDKP2_LogLoots do
+            local Loot = QDKP2_LogLoots[i]
+            local tologItem = Loot.item
+            if string.lower(tologItem) == string.lower(itemName) then
+                LootTableLvl = Loot.level;
+                break
+            end
         end
     end
     if LootTableLvl then
         local msg = string.gsub(QDKP2_LOC_LootsItem, "$ITEM", itemLink)
-        if ToLog >= 1 then
+        if LootTableLvl >= 1 then
             --log it
             toLogPvt = true;
             toLogRaid = true
         end
-        if ToLog == 2 then
+        if LootTableLvl == 2 then
             QDKP2_Msg(QDKP2_COLOR_BLUE .. name .. " " .. msg);
         end --message
-        if ToLog == 3 then
+        if LootTableLvl == 3 then
             QDKP2_NotifyUser(name .. " " .. msg);
         end --warning
     end
@@ -176,14 +185,15 @@ function QDKP2_GetItemPrice(item, zone)
         QDKP2_Debug(3, "Core", "Loot is a valid raid drop. Looking for default amount " .. variable .. "=" .. tostring(price))
         price = price or 0
     end
-    for i = 1, #QDKP2_ChargeLoots do
-        local Loot = QDKP2_ChargeLoots[i]
-        if string.lower(Loot.item) == string.lower(itemName) then
-            price = Loot.DKP
-            break
+    if QDKP2_ChargeLoots then
+        for i = 1, #QDKP2_ChargeLoots do
+            local Loot = QDKP2_ChargeLoots[i]
+            if string.lower(Loot.item) == string.lower(itemName) then
+                price = Loot.DKP
+                break
+            end
         end
     end
-    return price
 end
 
 function QDKP2_PayLoot(name, quota, loot, ZS)

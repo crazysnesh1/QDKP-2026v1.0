@@ -537,7 +537,20 @@ function QDKP2log_GetTS(Log)
 end
 function QDKP2log_GetModEntryDateTime(Log)
     --returns the date and time for the log voice passed
-    return QDKP2_GetDateTextFromTS(QDKP2log_GetTS(Log))
+    local text = QDKP2_GetDateTextFromTS(QDKP2log_GetTS(Log))
+
+    -- Блок локализации дней недели для ruRU клиента
+    if GetLocale() == "ruRU" and text then
+        text = string.gsub(text, "Mon", "Пн")
+        text = string.gsub(text, "Tue", "Вт")
+        text = string.gsub(text, "Wed", "Ср")
+        text = string.gsub(text, "Thu", "Чт")
+        text = string.gsub(text, "Fri", "Пт")
+        text = string.gsub(text, "Sat", "Сб")
+        text = string.gsub(text, "Sun", "Вс")
+    end
+
+    return text
 end
 
 function QDKP2log_GetReason(Log)

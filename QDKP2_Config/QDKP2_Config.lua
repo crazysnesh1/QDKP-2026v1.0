@@ -13,7 +13,11 @@ Enabled="|cff77ff77",
 Disabled="|cffff7788",
 Emphasis="|cffffc500",
 }
-
+QDKP2_Config.CommTypes = {
+    PROFILE = "Profile",
+    EXTERNALS = "Externals", 
+    ALTS = "Alts"
+}
 
 
 ------------------------------------------------------------- Main addon methods ----------------------------------------------------------------
@@ -113,38 +117,130 @@ end
 ----------------------------------------------- Configuration syncronization functions -------------------------------------------
 
 function QDKP2_Config:SendActiveProfile(name)
---Serializes the active profile and whispers it to name via the addon channel. If name is 'GUILD', broadcasts it to the whole guild
-	if not name then return; end
-	local distribution='WHISPER'
-	local text=self:Serialize(self.DB:GetCurrentProfile(),self.Profile,QDKP2_Config.CommVersion)
-	if name=='GUILD' then	distribution='GUILD'; end
-	self:SendCommMessage("QDKP2ConfPro", text, distribution, name, "BULK", callbackFn, callbackArg)
+    if not name then return; end
+    local distribution='WHISPER'
+    local data = {
+        type = QDKP2_Config.CommTypes.PROFILE,
+        data = {self.DB:GetCurrentProfile(), self.Profile},
+        version = QDKP2_Config.CommVersion
+    }
+    local text = self:Serialize(data)
+    if name=='GUILD' then    
+        distribution='GUILD'
+        if not IsGuildLeader(UnitName("player")) then
+            QDKP2_Msg("Only Guild Master can broadcast to guild", "ERROR")
+            return
+        end
+    end
+    self:SendCommMessage("QDKP2ConfPro", text, distribution, name, "BULK")
+end
+
+function QDKP2_Config:SendExternals(name)
+    if not name then return; end
+    if not QDKP2_OfficerMode() then
+        QDKP2_Msg(QDKP2_LOC_NoRights, "ERROR")
+        return
+    end
+    
+    local distribution = 'WHISPER'
+    local data = {
+        type = QDKP2_Config.CommTypes.EXTERNALS,
+        data = QDKP2externals,
+        version = QDKP2_Config.CommVersion
+    }
+    local text = self:Serialize(data)
+    
+    if name == 'GUILD' then 
+        distribution = 'GUILD'
+        -- Проверяем права офицера вместо прав ГМа
+        if not QDKP2_OfficerMode() then
+            QDKP2_Msg("You don't have officer rights to broadcast to guild", "ERROR")
+            return
+        end
+    end
+    
+    self:SendCommMessage("QDKP2ConfPro", text, distribution, name, "BULK")
+    QDKP2_Msg("Externals list sent to "..name)
+end
+
+function QDKP2_Config:SendAlts(name)
+    if not name then return; end
+    if not QDKP2_OfficerMode() then
+        QDKP2_Msg(QDKP2_LOC_NoRights, "ERROR")
+        return
+    end
+    
+    local distribution = 'WHISPER'
+    local data = {
+        type = QDKP2_Config.CommTypes.ALTS,
+        data = {
+            alts = QDKP2alts,
+            altsRestore = QDKP2altsRestore
+        },
+        version = QDKP2_Config.CommVersion
+    }
+    local text = self:Serialize(data)
+    
+    if name == 'GUILD' then 
+        distribution = 'GUILD'
+        -- Проверяем права офицера вместо прав ГМа
+        if not QDKP2_OfficerMode() then
+            QDKP2_Msg("You don't have officer rights to broadcast to guild", "ERROR")
+            return
+        end
+    end
+    
+    self:SendCommMessage("QDKP2ConfPro", text, distribution, name, "BULK")
+    QDKP2_Msg("Alts list sent to "..name)
 end
 
 function QDKP2_Config:OnCommReceived(prefix, message, distribution, sender)
---Deserializes the received configuration performing some checks on it. If the messagge is received by a whisper, prompts the player for confirmation before importing.
-	if prefix=='QDKP2ConfPro' then
-		if sender==UnitName("player") then return; end --do not want stuff from self.
-		local success,ProfileName,Profile,Version=self:Deserialize(message)
-		if not success then
-			QDKP2_Debug(1,"Config","Received some data by "..sender.." that could not be deserialized. Network problems? Forged data? Error="..ProfileName)
-			return
-		end
-		if not ProfileName or type(ProfileName)~='string' or
-			 not Profile or type(Profile)~='table'	or
-			 not Version or Version~=QDKP2_Config.CommVersion then
-			QDKP2_Debug(2,"Config","Received some data by "..sender.." that didn't pass the compilance check. Outdated version?")
-			return
-		end
-		if distribution=='GUILD' then
-			if IsGuildLeader(sender) then self:ImportProfile(ProfileName,Profile)
-			else
-				QDKP2_Debug(1,"Config",sender.." is broadcasting a configuration profile on the guild channel but he's not the GM.")
-			end
-		elseif distribution=='WHISPER' then
-			QDKP2_AskUser(string.format(QDKP2_Config.Localize.MESS_AllowImport,sender,ProfileName),QDKP2_Config.ImportProfile,self,ProfileName,Profile)
-		end
-	end
+    if prefix=='QDKP2ConfPro' then
+        if sender==UnitName("player") then return; end --do not want stuff from self.
+        
+        -- Пытаемся десериализовать данные
+        local success, data = self:Deserialize(message)
+        if not success then
+            QDKP2_Debug(1,"Config","Received corrupted data from "..sender..". Error="..data)
+            return
+        end
+        
+        -- Проверяем формат данных (старый vs новый)
+        if type(data) == 'table' and data.type and data.version then
+            -- Новый формат с типами
+            if data.version ~= QDKP2_Config.CommVersion then
+                QDKP2_Debug(2,"Config","Version mismatch from "..sender..". Expected "..QDKP2_Config.CommVersion..", got "..data.version)
+                return
+            end
+            
+            if data.type == QDKP2_Config.CommTypes.PROFILE then
+                self:HandleProfileData(data.data, distribution, sender)
+            elseif data.type == QDKP2_Config.CommTypes.EXTERNALS then
+                self:HandleExternalsData(data.data, distribution, sender)
+            elseif data.type == QDKP2_Config.CommTypes.ALTS then
+                self:HandleAltsData(data.data, distribution, sender)
+            else
+                QDKP2_Debug(2,"Config","Unknown data type from "..sender..": "..tostring(data.type))
+            end
+        else
+            -- Старый формат (для обратной совместимости)
+            local ProfileName, Profile, Version = data, message, distribution
+            if not ProfileName or type(ProfileName)~='string' or
+                 not Profile or type(Profile)~='table'    or
+                 not Version or Version~=QDKP2_Config.CommVersion then
+                QDKP2_Debug(2,"Config","Received old format data from "..sender.." that didn't pass compliance check.")
+                return
+            end
+            if distribution=='GUILD' then
+                if IsGuildLeader(sender) then self:ImportProfile(ProfileName,Profile)
+                else
+                    QDKP2_Debug(1,"Config",sender.." is broadcasting a configuration profile on the guild channel but he's not the GM.")
+                end
+            elseif distribution=='WHISPER' then
+                QDKP2_AskUser(string.format(QDKP2_Config.Localize.MESS_AllowImport,sender,ProfileName),QDKP2_Config.ImportProfile,self,ProfileName,Profile)
+            end
+        end
+    end
 end
 
 function QDKP2_Config:ImportProfile(BCT_ProfileName,BCT_Profile)
@@ -321,4 +417,329 @@ function QDKP2_Config:ApplyProfileToGlobal()
 	for i,v in pairs(self.TransTable) do
 		RunScript(v.."=QDKP2_Config.Profile."..i)
 	end
+end
+
+function QDKP2_Config:HandleProfileData(Data, distribution, sender)
+    local ProfileName, Profile = Data[1], Data[2]
+    if distribution=='GUILD' then
+        if IsGuildLeader(sender) then 
+            self:ImportProfile(ProfileName,Profile)
+        else
+            QDKP2_Debug(1,"Config",sender.." broadcasted profile but is not GM.")
+        end
+    elseif distribution=='WHISPER' then
+        QDKP2_AskUser(string.format(QDKP2_Config.Localize.MESS_AllowImport,sender,ProfileName),
+                     QDKP2_Config.ImportProfile, self, ProfileName, Profile)
+    end
+end
+
+local MAX_DISPLAY_NAMES = 5 -- Максимальное количество отображаемых имен
+
+local function GetExternalsListMessage(ExternalsData, sender)
+    -- ExternalsData - это таблица (словарь), где ключами являются имена.
+    local names = {}
+    for name in pairs(ExternalsData) do
+        table.insert(names, name)
+    end
+
+    table.sort(names) -- Сортируем для последовательного отображения
+    
+    local total_count = #names
+    local message_template = QDKP2_Config.Localize.MESS_AllowImportExternals or "Do you want to import externals list from %s?"
+    local more_text = QDKP2_Config.Localize.MESS_AndMore or " and %d more..."
+
+    local full_message = string.format(message_template, sender)
+    
+    if total_count > 0 then
+        -- Отображаем первые MAX_DISPLAY_NAMES имен
+        local display_list = {}
+        for i = 1, math.min(total_count, MAX_DISPLAY_NAMES) do
+            table.insert(display_list, names[i])
+        end
+        
+        -- Добавляем имена в отдельной строке
+        local list_message = "\n\n" .. table.concat(display_list, ", ")
+        
+        if total_count > MAX_DISPLAY_NAMES then
+            local remaining = total_count - MAX_DISPLAY_NAMES
+            list_message = list_message .. string.format(more_text, remaining)
+        end
+        
+        full_message = full_message .. list_message
+    end
+    
+    return full_message
+end
+
+function QDKP2_Config:HandleExternalsData(ExternalsData, distribution, sender)
+    QDKP2_Debug(1, "Config", "HandleExternalsData from " .. sender)
+    if distribution=='GUILD' then
+        -- Разрешаем принимать от любого офицера
+        if QDKP2_IsInGuild(sender) then
+            self:ImportExternals(ExternalsData)
+        else
+            QDKP2_Debug(1,"Config",sender.." broadcasted externals but is not in guild.")
+        end
+    elseif distribution=='WHISPER' then
+        -- Генерация сообщения с ограниченным списком
+        local confirmation_message = GetExternalsListMessage(ExternalsData, sender)
+        
+        -- Используем сгенерированное сообщение для вызова QDKP2_AskUser
+        QDKP2_AskUser(confirmation_message, function() self:ImportExternals(ExternalsData) end)
+    end
+end
+
+function QDKP2_Config:HandleAltsData(AltsData, distribution, sender)
+    QDKP2_Debug(1, "Config", "HandleAltsData from " .. sender)
+    
+    if distribution=='GUILD' then
+        if QDKP2_IsInGuild(sender) then 
+            self:ImportAlts(AltsData)
+        else
+            QDKP2_Debug(1,"Config",sender.." broadcasted alts but is not in guild.")
+        end
+    elseif distribution=='WHISPER' then
+        QDKP2_AskUser(string.format(QDKP2_Config.Localize.MESS_AllowImportAlts, sender),
+                     function() 
+                         QDKP2_Debug(1, "Config", "User accepted alts import from whisper")
+                         self:ImportAlts(AltsData) 
+                     end)
+    end
+end
+
+function QDKP2_Config:ImportExternals(ExternalsData)
+    if not QDKP2_OfficerMode() then
+        QDKP2_Msg(QDKP2_LOC_NoRights, "ERROR")
+        return
+    end
+    
+    -- Сохраняем текущие данные для сравнения
+    local oldExternals = {}
+    for k,v in pairs(QDKP2externals) do oldExternals[k] = v end
+    
+    -- Находим новых externals
+    local addedExternals = {}
+    for name, data in pairs(ExternalsData) do
+        if not oldExternals[name] then
+            table.insert(addedExternals, name)
+        end
+    end
+    
+    -- Находим удаленных externals  
+    local removedExternals = {}
+    for name, data in pairs(oldExternals) do
+        if not ExternalsData[name] then
+            table.insert(removedExternals, name)
+        end
+    end
+    
+    -- Формируем информационное сообщение
+    local message = "Import externals list?\n\n"
+    
+    if #addedExternals > 0 then
+        local maxShow = 8
+        local addedList = table.concat(addedExternals, ", ", 1, math.min(maxShow, #addedExternals))
+        if #addedExternals > maxShow then
+            addedList = addedList .. ", ... and " .. (#addedExternals - maxShow) .. " more"
+        end
+        message = message .. "Will ADD " .. #addedExternals .. " externals:\n" .. addedList .. "\n\n"
+    end
+    
+    if #removedExternals > 0 then
+        local maxShow = 8
+        local removedList = table.concat(removedExternals, ", ", 1, math.min(maxShow, #removedExternals))
+        if #removedExternals > maxShow then
+            removedList = removedList .. ", ... and " .. (#removedExternals - maxShow) .. " more"
+        end
+        message = message .. "Will REMOVE " .. #removedExternals .. " externals:\n" .. removedList .. "\n\n"
+    end
+    
+    if #addedExternals == 0 and #removedExternals == 0 then
+        message = message .. "No changes detected."
+    end
+    
+    -- Запрашиваем подтверждение
+    QDKP2_AskUser(message, 
+        function()
+            -- Удаляем старые externals которых нет в новых данных
+            for name, data in pairs(oldExternals) do
+                if not ExternalsData[name] then
+                    QDKP2_DelExternal(name, true)
+                end
+            end
+            
+            -- Добавляем новых externals используя API QDKP2
+            for name, data in pairs(ExternalsData) do
+                if not oldExternals[name] then
+                    QDKP2_NewExternal(name, data.datafield or "")
+                end
+            end
+            
+            -- Обновляем GUI
+            QDKP2_DownloadGuild()
+            QDKP2_RefreshAll()
+            
+            -- Выводим в чат список добавленных
+            if #addedExternals > 0 then
+                QDKP2_Msg("Added " .. #addedExternals .. " externals: " .. table.concat(addedExternals, ", "))
+            end
+            if #removedExternals > 0 then
+                QDKP2_Msg("Removed " .. #removedExternals .. " externals: " .. table.concat(removedExternals, ", "))
+            end
+            
+            QDKP2_Msg("Externals list imported successfully")
+            
+            -- Принудительно сохраняем данные
+            self:ForceSaveData()
+        end,
+        function()
+            QDKP2_Msg("Externals import cancelled")
+        end
+    )
+end
+
+function QDKP2_Config:ImportAlts(AltsData)
+    QDKP2_Debug(1, "Config", "ImportAlts started")
+    
+    if not QDKP2_OfficerMode() then
+        QDKP2_Msg(QDKP2_LOC_NoRights, "ERROR")
+        return
+    end
+
+    -- Извлекаем данные
+    local newAlts = AltsData.alts or AltsData
+    local newAltsRestore = AltsData.altsRestore or {}
+
+    -- Сохраняем текущие данные для сравнения
+    local oldAlts = {}
+    local oldAltsRestore = {}
+    for k,v in pairs(QDKP2alts) do oldAlts[k] = v end
+    for k,v in pairs(QDKP2altsRestore) do oldAltsRestore[k] = v end
+
+    -- Находим новые отношения alt-main
+    local addedAlts = {}
+    for alt, main in pairs(newAlts) do
+        if not oldAlts[alt] then
+            table.insert(addedAlts, alt .. " -> " .. main)
+        end
+    end
+
+    -- Находим удаленные отношения
+    local removedAlts = {}
+    for alt, main in pairs(oldAlts) do
+        if not newAlts[alt] then
+            table.insert(removedAlts, alt)
+        end
+    end
+
+    -- Формируем информационное сообщение
+    local message = "Import alts list?\n\n"
+    
+    if #addedAlts > 0 then
+        local maxShow = 6
+        local addedList = ""
+        for i = 1, math.min(maxShow, #addedAlts) do
+            if i > 1 then
+                addedList = addedList .. "\n"
+            end
+            addedList = addedList .. addedAlts[i]
+        end
+        if #addedAlts > maxShow then
+            addedList = addedList .. "\n... and " .. (#addedAlts - maxShow) .. " more"
+        end
+        message = message .. "Will ADD " .. #addedAlts .. " alt relations:\n" .. addedList .. "\n\n"
+    end
+    
+    if #removedAlts > 0 then
+        local maxShow = 8
+        local removedList = table.concat(removedAlts, ", ", 1, math.min(maxShow, #removedAlts))
+        if #removedAlts > maxShow then
+            removedList = removedList .. ", ... and " .. (#removedAlts - maxShow) .. " more"
+        end
+        message = message .. "Will REMOVE " .. #removedAlts .. " alt relations:\n" .. removedList .. "\n\n"
+    end
+    
+    if #addedAlts == 0 and #removedAlts == 0 then
+        message = message .. "No changes detected."
+    end
+    
+    -- Запрашиваем подтверждение
+    QDKP2_AskUser(message, 
+        function()
+            QDKP2_Debug(1, "Config", "User accepted alts import")
+            
+            -- Удаляем старые alts которых нет в новых данных
+            for alt, main in pairs(oldAlts) do
+                if not newAlts[alt] then
+                    QDKP2_ClearAlt(alt)
+                end
+            end
+            
+            -- Добавляем новых alts используя API QDKP2
+            for alt, main in pairs(newAlts) do
+                if not oldAlts[alt] then
+                    QDKP2_MakeAlt(alt, main, true)  -- true = без подтверждения
+                end
+            end
+            
+            QDKP2_Debug(1, "Config", "API calls completed, updating GUI")
+            
+            -- Обновляем GUI
+            QDKP2_DownloadGuild()
+            QDKP2_RefreshAll()
+            
+            -- Выводим в чат список изменений
+            if #addedAlts > 0 then
+                QDKP2_Msg("Added " .. #addedAlts .. " alt relations:")
+                for _, relation in ipairs(addedAlts) do
+                    QDKP2_Msg("  " .. relation)
+                end
+            end
+            if #removedAlts > 0 then
+                QDKP2_Msg("Removed " .. #removedAlts .. " alt relations: " .. table.concat(removedAlts, ", "))
+            end
+            
+            QDKP2_Msg("Alts list imported successfully")
+            
+            -- Принудительно сохраняем данные
+            self:ForceSaveData()
+        end,
+        function()
+            QDKP2_Debug(1, "Config", "User cancelled alts import")
+            QDKP2_Msg("Alts import cancelled")
+        end
+    )
+end
+
+function QDKP2_Config:ForceSaveData()
+    -- Пробуем разные методы сохранения
+    if QDKP2_UpdateDatabase then
+        QDKP2_UpdateDatabase()
+        QDKP2_Debug(1, "Config", "Called QDKP2_UpdateDatabase")
+    end
+    
+    if QDKP2_SaveData then
+        QDKP2_SaveData()
+        QDKP2_Debug(1, "Config", "Called QDKP2_SaveData")
+    end
+    
+    -- Сохраняем переменные WoW
+--    SaveVariables()
+--    QDKP2_Debug(1, "Config", "Called SaveVariables")
+    
+    QDKP2_Msg("Data saved successfully")
+end
+
+function QDKP2_Config:CopyTable(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in pairs(orig) do
+            copy[orig_key] = orig_value
+        end
+    else
+        copy = orig
+    end
+    return copy
 end

@@ -16,10 +16,11 @@
 -- Ниже предоставлен пример того, как должно быть:
 
 QDKP2_Instances = {
-    { name = "Naxxramas", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
-    { name = "Ulduar", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
-    { name = "Trial of the Crusader", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
-    { name = "Icecrown Citadel", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 }
+    { name = "Naxxramas", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 }, -- 1000 total for 10 normal, 2000 for 25 normal
+    { name = "Ulduar", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 }, -- 1500 total for 10 normal, 3000 for 25 normal
+    { name = "Trial of the Crusader", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 }, -- 1000 total for 25 heroic
+    { name = "Icecrown Citadel", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 }, -- 1300 total for 25 normal, 2600 for 25 heroic
+    { name = "Ruby Sanctum", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 } -- 400 total for 25 normal, 800 for 25 heroic
 }
 
 ------------------- БОССЫ -------------------
@@ -32,26 +33,70 @@ QDKP2_Instances = {
 -- Ниже предоставлен пример того, как должно быть:
 
 QDKP2_Bosses = {
+    -- Icecrown Citadel (ЦЛК) (25 гер = 2600 всего, 25 об = 1300 всего)
+	{ name = "--Icecrown Citadel--", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
+    { name = "Lord Marrowgar", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+    { name = "Lady Deathwhisper", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+	{ name = "Icecrown Gunship Battle", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+    { name = "Deathbringer Saurfang", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+    { name = "Festergut", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+    { name = "Rotface", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+    { name = "Professor Putricide", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+	{ name = "Prince Valanar", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+    { name = "Blood-Queen Lana'thel", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+    { name = "Valithria Dreamwalker", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+    { name = "Sindragosa", DKP_10N = 0, DKP_10H = 150, DKP_25N = 100, DKP_25H = 200 },
+    { name = "The Lich King", DKP_10N = 0, DKP_10H = 300, DKP_25N = 200, DKP_25H = 400 },
 
-    { name = "Malygos", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
+    -- Ruby Sanctum (25 гер = 800 всего, 25 об = 400 всего) - Халион дает больше очков
+	{ name = "----Ruby Sanctum----", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },	
+    { name = "Halion", DKP_10N = nil, DKP_10H = nil, DKP_25N = 400, DKP_25H = 800 },
+	
+    -- Naxxramas (10 об = 1000 всего, 25 об = 2000 всего, 10 гер = 2000 всего, 25 гер = 4000 всего)
+	{ name = "-----Naxxramas------", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
+    { name = "Anub'Rekhan", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Grand Widow Faerlina", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Maexxna", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Noth the Plaguebringer", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Heigan the Unclean", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Loatheb", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Instructor Razuvious", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Gothik the Harvester", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "The Four Horsemen", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Patchwerk", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Grobbulus", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Gluth", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Thaddius", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Sapphiron", DKP_10N = 65, DKP_10H = 130, DKP_25N = 130, DKP_25H = 260 },
+    { name = "Kel'Thuzad", DKP_10N = 90, DKP_10H = 180, DKP_25N = 180, DKP_25H = 360 },
+	
+    -- Ulduar (10 об = 1500 всего, 25 об = 3000 всего)
+	{ name = "-------Ulduar-------", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
+    { name = "Flame Leviathan", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "Ignis the Furnace Master", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "Razorscale", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "XT-002 Deconstructor", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "The Assembly of Iron", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "Kologarn", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "Auriaya", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "Hodir", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "Thorim", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "Freya", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "Mimiron", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "General Vezax", DKP_10N = 100, DKP_10H = 0, DKP_25N = 200, DKP_25H = 0 },
+    { name = "Yogg-Saron", DKP_10N = 100, DKP_10H = 0, DKP_25N = 300, DKP_25H = 0 },
+    { name = "Algalon the Observer", DKP_10N = 100, DKP_10H = 0, DKP_25N = 300, DKP_25H = 0 },
 
-    { name = "Sartharion", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
-
-    { name = "Onyxia", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
-
-    { name = "Archavon", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
-    { name = "Emalon", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
-    { name = "Koralon", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
-    { name = "Toravon", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
-
-    { name = "Kel'Thuzad", DKP_10N = nil, DKP_10H = nil, DKP_25N = nil, DKP_25H = nil },
-
-    { name = "Flame Leviathan", DKP_10N = nil, DKP_10H = nil, DKP_25N = nil, DKP_25H = nil },
-    { name = "Yogg-Saron", DKP_10N = nil, DKP_10H = nil, DKP_25N = nil, DKP_25H = nil },
-    { name = "Algalon the Observer", DKP_10N = nil, DKP_10H = nil, DKP_25N = nil, DKP_25H = nil },
-
-    { name = "The Lich King", DKP_10N = nil, DKP_10H = nil, DKP_25N = nil, DKP_25H = nil },
-
+    -- Trial of the Crusader (ТОЛЬКО ГЕРОИЧЕСКИЙ РЕЖИМ) (25 гер = 1000 всего, 10 гер = 500 всего)
+	{ name = "--------TotC--------", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
+    { name = "Northrend Beasts", DKP_10N = nil, DKP_10H = 100, DKP_25N = nil, DKP_25H = 200 },
+    { name = "Lord Jaraxxus", DKP_10N = nil, DKP_10H = 100, DKP_25N = nil, DKP_25H = 200 },
+    { name = "Faction Champions", DKP_10N = nil, DKP_10H = 100, DKP_25N = nil, DKP_25H = 200 },
+    { name = "Eydis Darkbane", DKP_10N = nil, DKP_10H = 100, DKP_25N = nil, DKP_25H = 200 },
+    { name = "Anub'arak", DKP_10N = nil, DKP_10H = 100, DKP_25N = nil, DKP_25H = 200 },
+	
+    -- Other Boss
+	{ name = "-------Other--------", DKP_10N = 0, DKP_10H = 0, DKP_25N = 0, DKP_25H = 0 },
 }
 
 ------------------- ЦЕНЫ НА ШМОТ -------------------
@@ -125,6 +170,21 @@ QDKP2_Prices_IC25H_Armor = 0
 QDKP2_Prices_IC25H_Tier = 0  --T10.5+ tokens
 QDKP2_Prices_IC25H_Weap = 0
 
+-- Ruby Sanctum NORMAL (10 men)
+QDKP2_Prices_RS10_Armor = 0
+QDKP2_Prices_RS10_Weap = 0
+
+-- Ruby Sanctum NORMAL (25 men)
+QDKP2_Prices_RS25_Armor = 0
+QDKP2_Prices_RS25_Weap = 0
+
+-- Ruby Sanctum HEROIC (10 men)
+QDKP2_Prices_RS10H_Armor = 0
+QDKP2_Prices_RS10H_Weap = 0
+
+-- Ruby Sanctum HEROIC (25 men)
+QDKP2_Prices_RS25H_Armor = 0
+QDKP2_Prices_RS25H_Weap = 0
 
 -- Если значение = true , тогда QDKP будет открывать окно ставок каждый раз, когда кто то лутает (шмот, токены, оружия)
 -- Если значение = false , окно будет открываться только если хотябы одна из категорий в блоке "ЦЕНЫ НА ШМОТ" не равна "0"
@@ -171,11 +231,12 @@ QDKP2_LogShards = false  -- если = true , регистрировать вс�
 -- Укажите тут предметы, которые не хотите отображать в журнале
 -- МоЖнО нЕ сОблЮдАтЬ рЕгИсТр
 QDKP2_NotLogLoots = {
-    "Blah Blah",
-    "Spam",
-    "Eggs",
-    "Valor Points",
-    "Очки доблести",
+--    "Эмблема льда",
+--    "Эмблема Льда",	
+--    "Эмблема триумфа",
+--    "Эмблема Триумфа",
+--    "Emblem of Triumph",
+--    "Emblem of Frost",
 }
 
 ------------------- СТАВКИ -------------------
@@ -214,14 +275,14 @@ QDKP2_BidM_AutoRoll = false                  -- если = true , QDKP пров�
 QDKP2_BidM_ConfirmWin = true                 -- если = true , перед тем как отдать предмет, всплывет окно с уточнением
 QDKP2_BidM_GiveItemToWinner = true           -- если = true , автоматически отдать предмет победителю, после уточнения отдачи в всплывающем окне
 
-QDKP2_BidM_MinBid = 100                      -- минимальная ставка DKP
-QDKP2_BidM_MaxBid = 9999999                  -- максимальная ставка DKP
-QDKP2_BidM_MinStep = 100                     -- минимальный шаг DKP
+QDKP2_BidM_MinBid = 500                      -- минимальная ставка DKP
+QDKP2_BidM_MaxBid = 1000000                  -- максимальная ставка DKP
+QDKP2_BidM_MinStep = 500                     -- минимальный шаг DKP
 
-QDKP2_BidM_BidStep1 = 5000                   -- после данного значения мин шаг будет равен QDKP2_BidM_Step1
-QDKP2_BidM_Step1 = 500                       -- минимальный шаг после достижения значения QDKP2_BidM_BidStep1
+QDKP2_BidM_BidStep1 = 10000                   -- после данного значения мин шаг будет равен QDKP2_BidM_Step1
+QDKP2_BidM_Step1 = 1000                       -- минимальный шаг после достижения значения QDKP2_BidM_BidStep1
 QDKP2_BidM_BidStep2 = 20000                  -- после данного значения мин шаг будет равен QDKP2_BidM_Step2
-QDKP2_BidM_Step2 = 1000                      -- минимальный шаг после достижения значения QDKP2_BidM_BidStep2
+QDKP2_BidM_Step2 = 2000                      -- минимальный шаг после достижения значения QDKP2_BidM_BidStep2
 
 
 -- Каналы чата, куда QDKP будет отправлять сообщения
@@ -239,10 +300,10 @@ QDKP2_BidM_ChannelReject = "GROUP"
 ------------------------- РАЗНОЕ --------------------------
 
 -- максимальное кол-во DKP, которое может иметь игрок
-QDKP2_MAXIMUM_NET = 99999999
+QDKP2_MAXIMUM_NET = 1000000
 
 -- минимальное кол-во DKP, которое может иметь игрок
-QDKP2_MINIMUM_NET = -99999999
+QDKP2_MINIMUM_NET = -10000
 
 -- если = true , установить нулевую сумму, в качестве оплаты за предметы
 QDKP2_CHARGEWITHZS = false
@@ -352,20 +413,20 @@ $SESSNAME: Name of the current session
 QDKP2_ODS_ENABLE = true
 
 -- если = true , вы будете видеть команды, отправляемые шепотом
-QDKP2_OS_VIEWWHSP = false
+QDKP2_OS_VIEWWHSP = true
 
 -- если = false , игроки могут запрашивать только свои отчеты
-QDKP2_IOD_REQALL = true
+QDKP2_IOD_REQALL = false
 
 -- если = false , игроки вне гильдии не могу запрашивать данные
-QDKP_OD_EXT = false
+QDKP_OD_EXT = true
 
-QDKP2_ROD = true  -- команда "?report или ?log получить отчет журнала
+QDKP2_ROD = false  -- команда "?report или ?log получить отчет журнала
 QDKP2_NOD = true  -- команда "?dkp" получить значения DKP
-QDKP2_POD = true  -- команда "?price" получить цену на предмет
+QDKP2_POD = false  -- команда "?price" получить цену на предмет
 QDKP2_AOD = true  -- команда "?boss" получить бонусы за босса
-QDKP2_COD = true  -- команда "?class" получить класс топ по DKP
-QDKP2_KOD = true  -- команда "?rank" получить ранг топ по DKP
+QDKP2_COD = false  -- команда "?class" получить класс топ по DKP
+QDKP2_KOD = false  -- команда "?rank" получить ранг топ по DKP
 
 -- минимальная длинна ключевых слов для поиска Prices-on-Demand
 QDKP2_POD_MINKEYWORD = 3
@@ -394,7 +455,7 @@ QDKP2_AnnounceAwards = true      -- награды за рейд, бонус з�
 QDKP2_AnnounceIronman = false    -- включает событие начала и окончания награды ironman
 QDKP2_AnnounceDKPChange = true   -- все награды и минуса DKP
 QDKP2_AnnounceNegative = true    -- объявить если значение DKP стало отрицательным
-QDKP2_AnnounceTimertick = false  -- сообщает о тиках таймера в рейд (спамит)
+QDKP2_AnnounceTimertick = true  -- сообщает о тиках таймера в рейд (спамит)
 
 
 -- если = true , то сообщения будут отправлятся игрокам всякий раз, когда их DKP изменяется(спам)
@@ -449,10 +510,10 @@ QDKP2_AWARD_ALT_TIMER = true                -- если = true , альт пер
 QDKP2_AWARD_ALT_ZEROSUM = true              -- если = true , альт персонажам начисляется нулевая сумма
 QDKP2_AWARD_ALT_IRONMAN = true              -- если = true , альт персонажам начисляется IronMan бонус
 
-QDKP2_AWARD_STANDBY_RAIDAWARD = "100%"      -- "%" от начисления рейду, если игрок на замене
-QDKP2_AWARD_STANDBY_TIMER = "100%"          -- "%" от начисления часового бонуса, если игрок на замене
-QDKP2_AWARD_STANDBY_ZEROSUM = "100%"        -- "%" от начисления часового бонуса, если игрок на замене
-QDKP2_AWARD_STANDBY_IRONMAN = "100%"        -- "%" от IronMan бонуса, если игрок на замене
+QDKP2_AWARD_STANDBY_RAIDAWARD = "50%"      -- "%" от начисления рейду, если игрок на замене
+QDKP2_AWARD_STANDBY_TIMER = "50%"          -- "%" от начисления часового бонуса, если игрок на замене
+QDKP2_AWARD_STANDBY_ZEROSUM = "50%"        -- "%" от начисления часового бонуса, если игрок на замене
+QDKP2_AWARD_STANDBY_IRONMAN = "50%"        -- "%" от IronMan бонуса, если игрок на замене
 
 QDKP2_AWARD_EXTERNAL_RAIDAWARD = true        -- если = true , игрокам вне гильдии начисляются награды рейду
 QDKP2_AWARD_EXTERNAL_TIMER = true            -- если = true , игрокам вне гильдии начисляется часовой бонус
@@ -484,7 +545,6 @@ QDKP2_SENDTRIG_CHARGE = true        -- если = true , загрузить по
 QDKP2_SENDTRIG_MODIFY = true        -- если = true , загрузить после ручного редактирования DKP
 QDKP2_SENDTRIG_ZS = true            -- если = true , загрузить после получения награды нулевой суммы
 
-
 --------------------------- ПРЕДУПРЕЖДЕНИЯ --------------------------------------------------
 
 -- если = true , предупредить когда данные игрока изменились и его текущее значение DKP стало отрицательным
@@ -512,12 +572,12 @@ QDKP2_CHECK_UPLOAD_DELAY = 2
 QDKP2_CHECK_TRIES = 3
 
 ------------------------ DEFAULTS ---------------------
-QDKP2_AutoBossEarn_Default = "off"      -- Авто начисление награды за боссов. Значения: "on" или "off"
+QDKP2_AutoBossEarn_Default = "on"      -- Авто начисление награды за боссов. Значения: "on" или "off"
 QDKP2_DetectBid_Default = "off"         -- Авто определение победителя. Значения: "on" или "off"
 QDKP2_UseFixedPrice_Default = "off"     -- Фиксированные цены. Значения: "on" или "off"
 QDKP2GUI_Default_RaidBonus = 100        -- Стандартное значение награды рейду
-QDKP2GUI_Default_TimerBonus = 0         -- Стандартное значение часового бонуса
-QDKP2GUI_Default_IMBonus = 0            -- Стандартное значение IronMan бонуса
+QDKP2GUI_Default_TimerBonus = 50         -- Стандартное значение часового бонуса
+QDKP2GUI_Default_IMBonus = 100            -- Стандартное значение IronMan бонуса
 QDKP2GUI_Default_QuickMod = 100         -- Значение быстрого начисления DKP
 QDKP2GUI_Default_QuickPerc1 = 10        -- Значение1 быстрого начисления DKP в %
 QDKP2GUI_Default_QuickPerc2 = 15        -- Значение2 быстрого начисления DKP в %

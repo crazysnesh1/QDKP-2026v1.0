@@ -1,12 +1,12 @@
 ## Interface: 30300
 ## Title: Quick DKP V2 - Core
 ## Author: molodoy3561@gmail.com
-## Version: 2.6.7.10
+## Version: 2.6.8
 ## Notes: Complete system for in-game DKP managment
 ## OptionalDeps: AtlasLoot, DBM-Core, BigWigs
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
-## SavedVariables: QDKP2_Data, QDKP2_Debug_List
+## SavedVariables: QDKP2_Data, QDKP2_Debug_List, QDKP2_RosterRolesDB, QDKP2_NotesCacheDB
 ## SavedVariablesPerCharacter: QDKP2backup
 
 Code\Lib\LibStub.lua
@@ -41,6 +41,8 @@ Code\Core\Check.lua
 Code\Core\Backup.lua
 Code\Core\Misc.lua
 Code\Core\Bidman.lua
+RoleBonus.lua
+DpsBonus.lua
 
 Local\enGB.lua
 Local\ruRU.lua

@@ -1,10 +1,10 @@
--- Copyright 2022 Nerget
+-- Copyright 2025 Nerget
 -- This file is a part of QDKP_V2 (see about.txt in the Addon's root folder)
 
 --        ## RUSSIAN (ruRU) LOCALIZATION ##
 if GetLocale() == 'ruRU' then
 
-    QDKP2_LOC_Authors = "Спасибо что используете QDKP от Verrisely, гильдия Soulflayer"
+    QDKP2_LOC_Authors = "В Данной версии аддона есть правки и улучшения от CoolSnesh, гильдия «The Blood» WoWCircle x100"
 
 
     --General

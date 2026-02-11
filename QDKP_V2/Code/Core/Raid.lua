@@ -20,6 +20,10 @@
 --      QDKP2_RemoveFromRaid(name,todo): if todo is nil or true will remove <name> from the raid roster. if false will include.
 --      QDKP2_IsRemoved(name): returns true if <name> has been removed from raid roster
 
+-- НОВЫЕ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+QDKP2_NonGuildMembers = {} -- Список негильдейцев
+QDKP2_AutoAnnounceNonGuild = false -- Авто-анонс
+QDKP2_AutoAnnounceChannel = "RAID" -- Канал по умолчанию
 
 ------------------------------------ LOCAL FUNCTIONS ------------------------------------
 local function CheckDeleted()
@@ -74,6 +78,10 @@ function QDKP2_UpdateRaid()
 
     local raidList = {}
     local skippedNames = {}
+    
+    -- Очищаем глобальный список чужаков
+    table.wipe(QDKP2_NonGuildMembers)
+
     local NameList = DictFromList(QDKP2raid, true)
     local raidListNameCon = DictFromList(QDKP2raid, true)
     local StandbyDict = DictFromList(QDKP2standby, true)
@@ -145,28 +153,43 @@ function QDKP2_UpdateRaid()
                     end
                 elseif not inguild then
                     table.insert(skippedNames, name)
+                    -- Сохраняем в глобальный список для GUI
+                    table.insert(QDKP2_NonGuildMembers, name)
                 end
             end
         end
 
-        if table.getn(QDKP2raid) ~= table.getn(raidList) and QDKP2_ALERT_NOT_IN_GUILD then
-            if (table.getn(skippedNames) > 1) then
-                --formats the skipped names
-                local namesstring = ""
+        -- Обработка списка чужаков
+        if table.getn(QDKP2raid) ~= table.getn(raidList) then
+            local namesstring = ""
+            if (table.getn(skippedNames) > 0) then
                 for i = 1, table.getn(skippedNames) do
                     namesstring = namesstring .. skippedNames[i]
-
                     if (skippedNames[i + 1] ~= nil) then
                         namesstring = namesstring .. ", "
                     end
                 end
-                local msg = string.gsub(QDKP2_LOC_NoInGuild, "$NAMES", namesstring)
-                QDKP2_Msg(QDKP2_COLOR_RED .. msg)
-            elseif (table.getn(skippedNames) == 1) then
-                local msg = string.gsub(QDKP2_LOC_NoInGuild, "$NAMES", skippedNames[1])
-                QDKP2_Msg(QDKP2_COLOR_RED .. msg)
+            end
+            
+            -- Стандартное предупреждение (только локально)
+            if QDKP2_ALERT_NOT_IN_GUILD then
+                if (table.getn(skippedNames) > 1) then
+                    local msg = string.gsub(QDKP2_LOC_NoInGuild, "$NAMES", namesstring)
+                    QDKP2_Msg(QDKP2_COLOR_RED .. msg)
+                elseif (table.getn(skippedNames) == 1) then
+                    local msg = string.gsub(QDKP2_LOC_NoInGuild, "$NAMES", skippedNames[1])
+                    QDKP2_Msg(QDKP2_COLOR_RED .. msg)
+                end
+            end
+
+            -- Автоматический анонс в чат
+            -- Срабатывает только если есть изменения в рейде (gotChanges), чтобы не спамить
+            if QDKP2_AutoAnnounceNonGuild and namesstring ~= "" and gotChanges then
+                local msg = "Внимание! Игроки не в гильдии: " .. namesstring
+                SendChatMessage(msg, QDKP2_AutoAnnounceChannel)
             end
         end
+
         if Manag then
             table.foreach(raidListNameCon, FindLeavers);
         end

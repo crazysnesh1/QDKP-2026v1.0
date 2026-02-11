@@ -91,6 +91,33 @@ QDKP2_Config.Tree.args.Broadcast={
 			hidden=IfGM,
 			order = 110,
 		},
+		        -- Новые кнопки для отправки externals и alts
+		SendExternals = {
+			type = 'execute',
+			name = L.BRC_SendExternals,
+			desc = L.BRC_ToolExternals,
+			func = function()
+				if QDKP2_OfficerMode() then
+					QDKP2_Config:SendExternals('GUILD')
+				else
+					QDKP2_Msg(QDKP2_LOC_NoRights, "ERROR")
+				end
+			end,
+			order = 120,
+		},
+		SendAlts = {
+			type = 'execute',
+			name = L.BRC_SendAlts, 
+			desc = L.BRC_ToolAlts,
+			func = function()
+				if QDKP2_OfficerMode() then
+					QDKP2_Config:SendAlts('GUILD')
+				else
+					QDKP2_Msg(QDKP2_LOC_NoRights, "ERROR")
+				end
+			end,
+			order = 130,
+		},
 	},
 }
 

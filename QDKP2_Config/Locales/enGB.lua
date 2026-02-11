@@ -408,9 +408,17 @@ L.LOOTPriceInst = "Prices by Instance"
 L.LOOTPriceItem = "Prices by Item"
 
 --Messages
+L.BRC_SendExternals = 'Send Externals'
+L.BRC_SendAlts = 'Send Altos'
+L.BRC_ToolExternals = 'Send a list of external members of the entire guild'
+L.BRC_ToolAlts = 'Send the bindings of the members of the "Main-Alt" guild'
 
 L.MESS_AllowImport = "%s wants to send a setting profile\
 for Quick DKP.\
 name: %q\
 If this in unexpected don't click yes.\
 Do you want to import his settings?"
+
+L.MESS_AllowImportExternals = "Do you want to import externals list from %s?"
+L.MESS_AllowImportAlts = "Do you want to import alts list from %s?"
+L.MESS_AndMore = " and %d more..."

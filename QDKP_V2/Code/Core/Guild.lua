@@ -94,6 +94,9 @@ function QDKP2_DownloadGuild(Revert)
     end
 
     table.wipe(QDKP2alts)
+	table.wipe(QDKP2_LaserAlts)
+    table.wipe(QDKP2_LaserNote)
+	
     local nameTemp = {}
     local rankIndexTemp = {} --I need this to perform IsInGuild() Check. Can't iterate each time throu QDKP2name. Little garbage generation but oh cmon.
 
@@ -141,6 +144,7 @@ function QDKP2_DownloadGuild(Revert)
             rankIndexTemp[name] = rankIndex
             QDKP2class[name] = class
             QDKP2online[name] = online
+			QDKP2_LaserNote[name] = datafield
 
             local NewEntry = false
             if not QDKP2note[name] then
@@ -247,6 +251,11 @@ function QDKP2_DownloadGuild(Revert)
             rankIndexTemp[name] = rankIndex
             QDKP2class[name] = class
             QDKP2online[name] = online
+			QDKP2_LaserNote[name] = datafield
+            if QDKP2_LaserAlts[Main] == nil then
+               QDKP2_LaserAlts[Main] = {}
+            end
+            QDKP2_LaserAlts[Main][name] = true
         end
         QDKP2_ModifiedDuringCheck = false
 

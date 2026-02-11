@@ -79,12 +79,55 @@ function QDKP2_StopSession(sure)
         QDKP2_Msg(QDKP2_LOC_GUINOONGOINGSESS)
         return
     end
+    
+    -- Сначала проверяем IronMan
     if QDKP2_IronManIsOn() and not sure then
         local msg = QDKP2_LOC_CloseIMSessWarn
-        QDKP2_AskUser(msg, QDKP2_StopSession, true)
+        QDKP2_AskUser(msg, function() QDKP2_StopSession(true) end)
         return
     end
 
+    -- Затем проверяем роли и показываем диалог
+    local roleCount = 0
+    if QDKP2GUI_Roster and QDKP2GUI_Roster.PlayerRoles then
+        roleCount = QDKP2GUI_Roster:CountRoles()
+    end
+    
+    if roleCount > 0 and not sure then
+        local msg = string.format("Вы собираетесь закрыть сессию. Сбросить %d назначенных ролей?", roleCount)
+        
+        -- Создаем кастомный диалог с двумя кнопками
+        StaticPopupDialogs["QDKP2_CLOSE_SESSION_CONFIRM"] = {
+            text = msg,
+            button1 = "Да, сбросить роли",
+            button2 = "Нет, оставить роли", 
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3,
+            OnAccept = function()
+                QDKP2_DoStopSession(true, true) -- закрыть и сбросить роли
+            end,
+            OnCancel = function()
+                QDKP2_DoStopSession(true, false) -- закрыть без сброса ролей
+            end
+        }
+        StaticPopup_Show("QDKP2_CLOSE_SESSION_CONFIRM")
+        return
+    end
+    
+    -- Если ролей нет или уже подтверждено, закрываем сессию
+    QDKP2_DoStopSession(sure, sure) -- sure определяет сброс ролей
+end
+
+-- ОСНОВНАЯ ФУНКЦИЯ ЗАКРЫТИЯ СЕССИИ
+function QDKP2_DoStopSession(sure, resetRoles)
+    local SID = QDKP2_SID.MANAGING
+    if not SID then return end
+    
+    QDKP2_Debug(2, "Session", "Closing session. Reset roles: " .. tostring(resetRoles))
+
+    -- Выполняем стандартные операции закрытия
     if QDKP2_IronManIsOn() then
         QDKP2_IronManWipe();
     end
@@ -96,18 +139,43 @@ function QDKP2_StopSession(sure)
     end
     QDKP2_BidM_CountdownCancel()
 
+    -- Сбрасываем роли только если нужно
+    if resetRoles and QDKP2GUI_Roster and QDKP2GUI_Roster.ResetRolesOnSessionClose then
+        QDKP2GUI_Roster:ResetRolesOnSessionClose()
+        QDKP2_Msg("Сессия закрыта. Роли сброшены.")
+    else
+        QDKP2_Msg("Сессия закрыта. Роли сохранены.")
+    end
+
+    -- Завершаем сессию
     local SID = QDKP2_OngoingSession()
     QDKP2log_StopSession(QDKP2_SID.MANAGING)
 
     QDKP2_SID.MANAGING = nil
     QDKP2libs.Timer:CancelTimer(QDKP2_CloseSessionTimer, true)
 
-    --Reset the Raid custom tables
+    -- Сбрасываем таблицы рейда
     table.wipe(QDKP2standby)
     table.wipe(QDKP2raidRemoved)
 
     QDKP2_Events:Fire("SESSION_END", SID)
     QDKP2_Events:Fire("DATA_UPDATED", "all")
+end
+-- Команды для закрытия сессии с разными опциями
+SLASH_QDKP2_CLOSESESSION1 = "/dkpclose"
+SLASH_QDKP2_CLOSESESSION2 = "/closesession"
+SlashCmdList["QDKP2_CLOSESESSION"] = function(msg)
+    QDKP2_StopSession()
+end
+
+SLASH_QDKP2_CLOSESESSION_RESET1 = "/dkpclosereset"
+SlashCmdList["QDKP2_CLOSESESSION_RESET"] = function(msg)
+    QDKP2_StopSessionWithReset()
+end
+
+SLASH_QDKP2_CLOSESESSION_NORESET1 = "/dkpclosenoreset"
+SlashCmdList["QDKP2_CLOSESESSION_NORESET"] = function(msg)
+    QDKP2_StopSessionWithoutReset()
 end
 
 --SID = QDKP2_OngoingSession()

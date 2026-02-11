@@ -21,6 +21,8 @@
 QDKP2_Data = {}
 QDKP2backup = {}
 QDKP2suppressWhispers = {}
+QDKP2_LaserNote = {}
+QDKP2_LaserAlts = {}
 
 function QDKP2_InitData(GuildName, NoClearLocal)
     if GuildName == "*_ALL_*" or not QDKP2_Data then
@@ -42,6 +44,8 @@ function QDKP2_InitData(GuildName, NoClearLocal)
         QDKP2currentSessions = {}
         QDKP2_BossDeath = {}
         QDKP2_SuppressWhisper = {}
+		table.wipe(QDKP2_LaserNote)
+        table.wipe(QDKP2_LaserAlts)
     end
 end
 
@@ -356,6 +360,9 @@ function QDKP2_ResetPlayer(name)
     QDKP2altsRestore[name] = nil
 
     QDKP2standby[name] = nil
+	
+	QDKP2_LaserNote[name] = nil
+    QDKP2_LaserAlts[name] = nil
 
     QDKP2_RefreshGuild()
     GuildRoster()

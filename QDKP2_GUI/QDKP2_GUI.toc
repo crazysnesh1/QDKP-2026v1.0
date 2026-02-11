@@ -1,13 +1,14 @@
 ## Interface: 30300
 ## Title: Quick DKP V2 - GUI
 ## Author: rb@belloli.net
-## Version: 2.6.7.10
+## Version: 2.6.8
 ## Notes: Graphical Unit Interface for QDKP V2. Needs the core addon.
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## Dependencies: QDKP_V2
 ## SavedVariablesPerCharacter: QDKP2_dkpPerHour,QDKP2_dkpIM,QDKP2_dkpAwardRaid,QDKP2_dkpMenuAward
 
+ICCTimers.lua
 Code\GUI.lua
 Code\Log.lua
 Code\Log.Player.lua
