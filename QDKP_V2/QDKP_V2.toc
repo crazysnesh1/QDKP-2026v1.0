@@ -1,8 +1,8 @@
 ## Interface: 30300
 ## Title: Quick DKP V2 - Core
-## Author: molodoy3561@gmail.com
-## Version: 2.6.8
-## Notes: Complete system for in-game DKP managment
+## Author: Edited by CoolSnesh
+## Version: 2026v1.0
+## Notes: Комплексная система для начисления ДКП и управления гильдией
 ## OptionalDeps: AtlasLoot, DBM-Core, BigWigs
 ## DefaultState: Enabled
 ## LoadOnDemand: 0

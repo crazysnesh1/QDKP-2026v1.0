@@ -1,8 +1,8 @@
-## Interface: 40000
+## Interface: 30300
 ## Title: Quick DKP V2 - Config
-## Author: rb@belloli.net
-## Version: 2.7.2
-## Notes: Configure options for QDKP2. Needs the core addon.
+## Author: Edited by CoolSnesh
+## Version: 2026v1.0
+## Notes: Настройка параметров внутри игры (Необходим основной аддон)
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## Dependencies: QDKP_V2
