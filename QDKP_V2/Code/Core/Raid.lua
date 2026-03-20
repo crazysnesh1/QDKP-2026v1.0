@@ -289,10 +289,45 @@ function QDKP2_GetNumRaidMembers()
 end
 
 function QDKP2_GetInstanceDifficulty()
-    local instDiff, _, maxPlayers, isHeroic, isDynamic = select(3, GetInstanceInfo())
-    if (isDynamic and isHeroic == 1) or (maxPlayers == 5 and instDiff == 2) or instDiff == 3 or instDiff == 4 then
+    local _, instanceType, instDiff, instDiffName, maxPlayers = GetInstanceInfo()
+    maxPlayers = tonumber(maxPlayers) or 0
+
+    local function IsHeroicText(text)
+        if not text then return false end
+        text = string.lower(tostring(text))
+        return string.find(text, "heroic", 1, true) ~= nil
+            or string.find(text, "геро", 1, true) ~= nil
+    end
+
+    if instanceType == "raid" and GetRaidDifficulty then
+        local raidDiff, raidDiffName, raidMaxPlayers = GetRaidDifficulty()
+        raidMaxPlayers = tonumber(raidMaxPlayers) or maxPlayers
+
+        if raidDiff == 3 or raidDiff == 4 then
+            return raidMaxPlayers .. "H"
+        end
+
+        if IsHeroicText(raidDiffName) then
+            return raidMaxPlayers .. "H"
+        end
+
+        if raidDiff == 1 or raidDiff == 2 then
+            return raidMaxPlayers .. "N"
+        end
+    end
+
+    if instDiff == 3 or instDiff == 4 then
         return maxPlayers .. "H"
     end
+
+    if maxPlayers == 5 and instDiff == 2 then
+        return maxPlayers .. "H"
+    end
+
+    if IsHeroicText(instDiffName) then
+        return maxPlayers .. "H"
+    end
+
     return maxPlayers .. "N"
 end
 

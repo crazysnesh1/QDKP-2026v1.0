@@ -54,6 +54,41 @@ local specialBossHandlers = {
 QDKP2_ShipBattleCompleted = false
 QDKP2_ValithriaHealed = false
 
+local QDKP2_DBMHalionHookRegistered = false
+
+local function QDKP2_DBMKillCallback(event, mod)
+    if event ~= "DBM_Kill" then return end
+    if not mod then return end
+
+    local modId = string.lower(tostring(mod.id or ""))
+    local modName = ""
+    if mod.localization and mod.localization.general and mod.localization.general.name then
+        modName = string.lower(tostring(mod.localization.general.name or ""))
+    end
+
+    if modId == "halion" or
+       modName == "halion" or
+       modName == "халион" or
+       modName == "halion, the twilight destroyer" or
+       modName == "халион, сумеречный разрушитель" then
+        QDKP2_BossKilled("Halion")
+    end
+end
+
+local function QDKP2_RegisterDBMHalionHook()
+    if QDKP2_DBMHalionHookRegistered then return end
+    if not (DBM and DBM.RegisterCallback) then return end
+
+    DBM:RegisterCallback("DBM_Kill", QDKP2_DBMKillCallback)
+    QDKP2_DBMHalionHookRegistered = true
+end
+
+if DBM and DBM.RegisterOnLoadCallback then
+    DBM:RegisterOnLoadCallback(QDKP2_RegisterDBMHalionHook)
+elseif DBM and DBM.RegisterCallback then
+    QDKP2_RegisterDBMHalionHook()
+end
+
 function QDKP2_CheckSpecialBoss(boss)
     if specialBossHandlers[boss] then
         local result = specialBossHandlers[boss]()

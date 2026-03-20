@@ -59,6 +59,10 @@ end
 QDKP2_RoleBonus = {
     enabled = true,
     config = {
+        DD = {
+            name = "ДД",
+            color = { r = 1, g = 1, b = 1 }
+        },
         BIS = {
             name = "БИС",
             color = { r = 1, g = 0.84, b = 0 },
@@ -239,7 +243,122 @@ QDKP2_RoleBonusBosses = {
         TANK_HEAL_10N = 0, TANK_HEAL_10H = 0, 
         TANK_HEAL_25N = 0, TANK_HEAL_25H = 60, 
         BIS_TANK_HEAL_10N = 0, BIS_TANK_HEAL_10H = 0, 
-        BIS_TANK_HEAL_25N = 0, BIS_TANK_HEAL_25H = 80 },	
+        BIS_TANK_HEAL_25N = 0, BIS_TANK_HEAL_25H = 80 },
+		
+	-- Ulduar (РС)
+    { name = "-------Ulduar-------" },
+	
+	{ name = "Flame Leviathan", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Ignis the Furnace Master", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Razorscale", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "XT-002 Deconstructor", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "The Assembly of Iron", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Kologarn", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Auriaya", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Hodir", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Thorim", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Freya", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Mimiron", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "General Vezax", 
+        BIS_10N = 20, BIS_10H = 0,
+        BIS_25N = 40, BIS_25H = 0,
+        TANK_HEAL_10N = 25, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 55, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Yogg-Saron", 
+        BIS_10N = 30, BIS_10H = 0,
+        BIS_25N = 60, BIS_25H = 0,
+        TANK_HEAL_10N = 50, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 70, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
+	
+	{ name = "Algalon the Observer", 
+        BIS_10N = 30, BIS_10H = 0,
+        BIS_25N = 60, BIS_25H = 0,
+        TANK_HEAL_10N = 50, TANK_HEAL_10H = 0, 
+        TANK_HEAL_25N = 70, TANK_HEAL_25H = 0, 
+        BIS_TANK_HEAL_10N = 50, BIS_TANK_HEAL_10H = 0, 
+        BIS_TANK_HEAL_25N = 100, BIS_TANK_HEAL_25H = 0 },
 }
 
 -- Глобальные функции для работы с ролями (интеграция с Roster.lua)
@@ -307,11 +426,14 @@ function QDKP2_AwardRoleBonus(boss, difficulty)
     for i = 1, QDKP2_GetNumRaidMembers() do
         local name = QDKP2_GetRaidRosterInfo(i)
         if name and QDKP2_IsInGuild(name) then
-            -- Используем существующую систему ролей из Roster.lua
-            local role = (QDKP2GUI_Roster and QDKP2GUI_Roster.PlayerRoles and QDKP2GUI_Roster.PlayerRoles[name]) or 
-             (QDKP2_RosterRolesDB and QDKP2_RosterRolesDB[name])
-            if role and bonuses[role] then
-                local bonusInfo = bonuses[role]
+            -- Получаем ключ бонуса через GetBonusRole из Roster
+            local bonusKey = nil
+            if QDKP2GUI_Roster and QDKP2GUI_Roster.GetBonusRole then
+                bonusKey = QDKP2GUI_Roster:GetBonusRole(name)
+            end
+
+            if bonusKey and bonuses[bonusKey] then
+                local bonusInfo = bonuses[bonusKey]
                 local reason = string.format("Бонус %s за %s", bonusInfo.name, boss)
                 
                 QDKP2_AddTotals(name, bonusInfo.amount, 0, 0, reason)
@@ -387,14 +509,16 @@ end
 
 -- Утилиты для работы с ролями
 function QDKP2_GetPlayerRoleBonus(playerName, boss, difficulty)
-    -- Возвращает бонус игрока за роль для конкретного босса
     if not QDKP2_RoleBonus.enabled then return 0 end
     
-    local role = QDKP2GUI_Roster and QDKP2GUI_Roster.PlayerRoles and QDKP2GUI_Roster.PlayerRoles[playerName]
-    if not role then return 0 end
+    local bonusKey = nil
+    if QDKP2GUI_Roster and QDKP2GUI_Roster.GetBonusRole then
+        bonusKey = QDKP2GUI_Roster:GetBonusRole(playerName)
+    end
+    if not bonusKey then return 0 end
     
     local bonuses = QDKP2_GetRoleBonusForBoss(boss, difficulty)
-    return bonuses[role] and bonuses[role].amount or 0
+    return bonuses[bonusKey] and bonuses[bonusKey].amount or 0
 end
 
 -- Инициализация

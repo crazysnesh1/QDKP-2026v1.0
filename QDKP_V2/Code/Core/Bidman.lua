@@ -17,7 +17,17 @@
 -- QDKP2_BidM_RollWatch(player,roll,rollLow,rollHigh): Called every time a /roll is detected.
 -- QDKP2_BidM_CancelPlayer(name): Removes name from the bid list. Sends a message if set so.
 
+local function QDKP2_BidM_GetLegacyStep(value)
+    value = tonumber(value) or 0
 
+    if value >= QDKP2_BidM_BidStep2 then
+        return tonumber(QDKP2_BidM_Step2) or 0
+    elseif value >= QDKP2_BidM_BidStep1 then
+        return tonumber(QDKP2_BidM_Step1) or 0
+    else
+        return tonumber(QDKP2_BidM_MinStep) or 0
+    end
+end
 
 --------------------- BID START/STOP --------------------------
 
@@ -354,13 +364,7 @@ function QDKP2_BidM_BidWatcher(txt, player, channel)
                         elseif currentValue ~= nil and dkp < currentValue then
                             --is the bid less current max bid another player?
                             local mess = QDKP2_LOC_BidLessCurrentBid
-                            if currentValue < QDKP2_BidM_BidStep1 then
-                                mess = string.gsub(mess, "$MINSTEP", tostring(QDKP2_BidM_MinBid))
-                            elseif currentValue >= QDKP2_BidM_BidStep1 and currentValue < QDKP2_BidM_BidStep2 then
-                                mess = string.gsub(mess, "$MINSTEP", tostring(QDKP2_BidM_Step1))
-                            elseif currentValue >= QDKP2_BidM_BidStep2 then
-                                mess = string.gsub(mess, "$MINSTEP", tostring(QDKP2_BidM_Step2))
-                            end
+                            mess = string.gsub(mess, "$MINSTEP", tostring(QDKP2_BidM_GetLegacyStep(math.max((currentValue or 0) - 1, 0))))
                             QDKP2_BidM_SendMessage(player, "NOBID", channel, mess)
                             return false
                         end
@@ -369,18 +373,35 @@ function QDKP2_BidM_BidWatcher(txt, player, channel)
                     QDKP2_Debug(3, "BidM", "Bid ok, adding to the list.")
                     QDKP2_BidM.LIST[player] = newBet
 
-                    if currentValue == nil then
-                        currentValue = 0;
-                    end
-                    if newBet.value >= currentValue and newBet.value >= QDKP2_BidM_MinBid then
-                        if newBet.value < QDKP2_BidM_BidStep1 then
-                            currentValue = newBet.value + QDKP2_BidM_MinStep
-                        elseif newBet.value >= QDKP2_BidM_BidStep1 and newBet.value < QDKP2_BidM_BidStep2 then
-                            currentValue = newBet.value + QDKP2_BidM_Step1
-                        elseif newBet.value >= QDKP2_BidM_BidStep2 then
-                            currentValue = newBet.value + QDKP2_BidM_Step2
-                        end
-                    end
+					if currentValue == nil then
+						currentValue = 0;
+					end
+
+					local oldMinToBid = currentValue
+					local oldStep = QDKP2_BidM_GetLegacyStep(math.max((oldMinToBid or 0) - 1, 0))
+
+					if newBet.value >= currentValue and newBet.value >= QDKP2_BidM_MinBid then
+						local newStep = QDKP2_BidM_GetLegacyStep(newBet.value)
+						currentValue = newBet.value + newStep
+						if newStep ~= oldStep then
+						local reachedThreshold = nil
+						
+						if tonumber(QDKP2_BidM_BidStep2) and newBet.value >= tonumber(QDKP2_BidM_BidStep2) then
+							reachedThreshold = tonumber(QDKP2_BidM_BidStep2)
+						elseif tonumber(QDKP2_BidM_BidStep1) and newBet.value >= tonumber(QDKP2_BidM_BidStep1) then
+							reachedThreshold = tonumber(QDKP2_BidM_BidStep1)
+						end
+						local msg
+						
+						if reachedThreshold then
+							msg = "Достигнут порог " .. tostring(reachedThreshold) .. ". Далее минимальный шаг " .. tostring(newStep) .. "."
+						else
+							msg = "Далее минимальный шаг " .. tostring(newStep) .. "."
+						end
+
+						QDKP2_BidM_SendMessage(nil, "MANAGER", "bid_start", msg)
+					end
+				end
 
                     if QDKP2_BidM_CountdownCount then
                         QDKP2_BidM_CountdownCancel();
@@ -681,11 +702,3 @@ end
 function QDKP2_BidM_isBidding()
     return QDKP2_BidM.BIDDING
 end
-
-
-
-
-
-
-
-

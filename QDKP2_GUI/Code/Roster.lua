@@ -37,7 +37,7 @@ myClass.ColumnWidth = {
     bid = 55,
     value = 50,
     officer = 140,
-    role = 120  -- НОВАЯ КОЛОНКА ДЛЯ РОЛЕЙ
+    role = 70  -- НОВАЯ КОЛОНКА ДЛЯ РОЛЕЙ
 }
 
 myClass.Sort = {
@@ -46,6 +46,9 @@ myClass.Sort = {
     Values = {},
     Reverse = {}
 }
+
+-- Хранение автоматически определенных ролей (по талантам)
+myClass.AutoRoles = {}
 
 myClass.Offset = 0
 myClass.Sel = "guild"
@@ -72,17 +75,46 @@ myClass.SearchBox = nil
 
 -- Настройки ролей
 myClass.RoleBonusConfig = {
-    BIS = { name = "БИС", color = { r = 1, g = 0.84, b = 0 } },
-    TANK_HEAL = { name = "ТАНК/ХИЛ", color = { r = 0, g = 0.8, b = 1 } },
-    BIS_TANK_HEAL = { name = "БИС ТАНК/ХИЛ", color = { r = 0, g = 1, b = 0 } }
-}
-myClass.RolePriority = {
-    BIS_TANK_HEAL = 1, -- Самый высокий приоритет
-    TANK_HEAL = 2,     -- Ниже чем БисТанкХил
-    BIS = 3            -- Ниже всех
+    TANK = {
+        name = "Танк",
+        color = { r = 0, g = 0.5, b = 1 }  -- Синий
+    },
+    HEAL = {
+        name = "Хил",
+        color = { r = 0, g = 1, b = 0 }  -- Зеленый
+    },
+    DD = {
+        name = "Дпс",
+        color = { r = 1, g = 0.3, b = 0.3 }  -- Красный
+    },
+    BIS_TANK = {
+        name = "Бис Танк",
+        color = { r = 0, g = 0.2, b = 0.6 }  -- Темно-синий
+    },
+    BIS_HEAL = {
+        name = "Бис Хил",
+        color = { r = 0, g = 0.5, b = 0 }  -- Темно-зеленый
+    },
+    BIS_DD = {
+        name = "Бис Дпс",
+        color = { r = 0.6, g = 0, b = 0 }  -- Темно-красный
+    }
 }
 
-myClass.PlayerRoles = {} -- таблица для хранения ролей игроков
+myClass.RolePriority = {
+    BIS_TANK_HEAL = 1, -- Самый высокий приоритет (для бонусов)
+    TANK_HEAL = 2,     -- Ниже чем БисТанкХил (для бонусов)
+    BIS_TANK = 3,      -- Для отображения
+    BIS_HEAL = 4,      -- Для отображения
+    TANK = 5,          -- Для отображения
+    HEAL = 6,          -- Для отображения	
+    BIS_DD = 7,        -- Для отображения
+	BIS = 8,           -- Бис без авто роли
+    DD = 9             -- Для отображения
+}
+
+myClass.PlayerManualRoles = {}  -- таблица для ручных ролей (BIS)
+myClass.PlayerAutoRoles = {}    -- таблица для автоматических ролей (TANK/HEAL/DD)
 myClass.officerNoteCache = {} -- кеш для заметок игроков
 
 -- Sort values
@@ -184,9 +216,9 @@ end
 -- Создаем интерфейс для управления ролями (ЗЕЛЕНЫЙ)
 function myClass.CreateRoleUI(self)
     self.RoleButton = CreateFrame("Button", "QDKP2_Frame2_RoleButton", self.Frame, "UIPanelButtonTemplate")
-    self.RoleButton:SetSize(50, 25) 
+    self.RoleButton:SetSize(35, 25) 
     self.RoleButton:SetPoint("LEFT", "QDKP2_Frame2_SortBtn_role", "RIGHT", 0, 0)
-    self.RoleButton:SetText("Назн.") 
+    self.RoleButton:SetText("Наз.") 
     
     -- Функция для яркой покраски
     local function PaintGreen(btn)
@@ -414,15 +446,22 @@ end
 
 -- Функция регистрации событий
 function myClass.RegisterEvents(self)
-    -- Событие выхода из игры
     self.Frame:RegisterEvent("PLAYER_LOGOUT")
-    
-    -- Обработчик событий
+    self.Frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self.Frame:RegisterEvent("RAID_ROSTER_UPDATE")
+
     self.Frame:SetScript("OnEvent", function(frame, event, ...)
         if event == "PLAYER_LOGOUT" then
             self:SaveRoles()
             self:SaveNotesCache()
             QDKP2_Debug(2, "Roster", "Роли и заметки сохранены при выходе из игры")
+
+        elseif event == "PLAYER_ENTERING_WORLD" then
+            self:InitTalentRoleSystem()
+            self:ScanRaidRoles()
+
+        elseif event == "RAID_ROSTER_UPDATE" then
+            self:ScanRaidRoles()
         end
     end)
 end
@@ -511,22 +550,9 @@ end
 function myClass.ShowRoleMenu(self)
     local menu = {
         { text = "Назначение ролей", isTitle = true },
-        { text = "БИС", 
+        { text = "Бис", 
           func = function() 
               self:AssignRoleToSelected("BIS") 
-          end },
-        { text = "ТАНК/ХИЛ", 
-          func = function() 
-              self:AssignRoleToSelected("TANK_HEAL") 
-          end },
-        { text = "БИС ТАНК/ХИЛ", 
-          func = function() 
-              self:AssignRoleToSelected("BIS_TANK_HEAL") 
-          end },
-        { text = "Сохранить роли", 
-          func = function() 
-              self:SaveRoles()
-              QDKP2_Msg("Роли сохранены") 
           end },
         { text = "Сбросить роль", 
           func = function() 
@@ -555,40 +581,37 @@ function myClass.AssignRoleToSelected(self, role)
     
     for _, playerName in ipairs(self.SelectedPlayers) do
         if role == "NONE" then
-            self.PlayerRoles[playerName] = nil
-            QDKP2_Debug(2, "Roles", "Сброшена роль для: " .. playerName)
+            self.PlayerManualRoles[playerName] = nil
+            QDKP2_Debug(2, "Roles", "Сброшена ручная роль для: " .. playerName)
         else
-            self.PlayerRoles[playerName] = role
-            local roleName = self.RoleBonusConfig[role].name
-            QDKP2_Debug(2, "Roles", "Назначена роль '" .. roleName .. "' для: " .. playerName)
+            -- Устанавливаем только ручную роль (BIS)
+            self.PlayerManualRoles[playerName] = role
+            QDKP2_Debug(2, "Roles", "Назначена ручная роль '" .. role .. "' для: " .. playerName)
         end
     end
     
-    -- Автосохранение при изменении ролей
     self:SaveRoles()
-    
     self:Refresh()
     QDKP2_Msg("Роли обновлены для выбранных игроков")
 end
 
 -- Функция сохранения ролей
 function myClass.SaveRoles(self)
-    -- Сохраняем роли в глобальную переменную для сохранения между сессиями
     QDKP2_RosterRolesDB = QDKP2_RosterRolesDB or {}
     
-    -- Копируем текущие роли в базу данных
-    for playerName, role in pairs(self.PlayerRoles) do
+    -- Сохраняем только ручные роли (BIS)
+    for playerName, role in pairs(self.PlayerManualRoles) do
         QDKP2_RosterRolesDB[playerName] = role
     end
     
-    -- Удаляем записи для игроков, у которых сброшены роли
+    -- Удаляем записи для игроков без ручных ролей
     for playerName, _ in pairs(QDKP2_RosterRolesDB) do
-        if not self.PlayerRoles[playerName] then
+        if not self.PlayerManualRoles[playerName] then
             QDKP2_RosterRolesDB[playerName] = nil
         end
     end
     
-    QDKP2_Debug(2, "Roles", "Роли сохранены. Всего записей: " .. tostring(self:CountRoles()))
+    QDKP2_Debug(2, "Roles", "Роли сохранены. Ручных записей: " .. tostring(self:CountManualRoles()))
 end
 
 -- Функция загрузки ролей
@@ -599,34 +622,46 @@ function myClass.LoadRoles(self)
         return
     end
     
-    -- Загружаем роли из сохраненной базы данных
-    self.PlayerRoles = {}
+    -- Загружаем только ручные роли из сохраненной базы данных
+    self.PlayerManualRoles = {}
     for playerName, role in pairs(QDKP2_RosterRolesDB) do
-        self.PlayerRoles[playerName] = role
+        self.PlayerManualRoles[playerName] = role
     end
     
-    QDKP2_Debug(2, "Roles", "Роли загружены. Всего записей: " .. tostring(self:CountRoles()))
+    QDKP2_Debug(2, "Roles", "Роли загружены. Ручных записей: " .. tostring(self:CountManualRoles()))
 end
 
 -- Функция сброса всех ролей при закрытии сессии
 function myClass.ResetRolesOnSessionClose(self)
-    if self.PlayerRoles then
-        local roleCount = 0
-        for _ in pairs(self.PlayerRoles) do
+    local roleCount = 0
+    
+    -- Сбрасываем ручные роли (BIS)
+    if self.PlayerManualRoles then
+        for _ in pairs(self.PlayerManualRoles) do
             roleCount = roleCount + 1
         end
-        table.wipe(self.PlayerRoles)
-        QDKP2_Debug(2, "Roles", "Роли сброшены при закрытии сессии. Сброшено: " .. roleCount .. " ролей")
-        return true
+        table.wipe(self.PlayerManualRoles)
     end
-    return false
+    
+    -- Очищаем сохраненную базу данных
+    if QDKP2_RosterRolesDB then
+        table.wipe(QDKP2_RosterRolesDB)
+    end
+    
+    if roleCount > 0 then
+        QDKP2_Debug(2, "Roles", "Роли сброшены при закрытии сессии. Сброшено: " .. roleCount .. " ролей")
+    else
+        QDKP2_Debug(2, "Roles", "Нет ролей для сброса при закрытии сессии")
+    end
+    
+    return roleCount > 0
 end
 
 -- Функция подсчета ролей
 function myClass.CountRoles(self)
     local count = 0
-    if self.PlayerRoles then
-        for _ in pairs(self.PlayerRoles) do
+    if self.PlayerManualRoles then
+        for _ in pairs(self.PlayerManualRoles) do
             count = count + 1
         end
     end
@@ -635,36 +670,122 @@ end
 
 -- Функция сброса всех ролей (обновленная)
 function myClass.ResetAllRoles(self)
-    table.wipe(self.PlayerRoles)
-    -- Также очищаем сохраненную базу
+    table.wipe(self.PlayerManualRoles)  -- Сбрасываем только ручные роли
+    
     if QDKP2_RosterRolesDB then
         table.wipe(QDKP2_RosterRolesDB)
     end
+    
     self:Refresh()
     QDKP2_Msg("Все роли сброшены")
 end
 
+function myClass.CountManualRoles(self)
+    local count = 0
+    if self.PlayerManualRoles then
+        for _ in pairs(self.PlayerManualRoles) do
+            count = count + 1
+        end
+    end
+    return count
+end
+
+function myClass.DebugRoles(self, playerName)
+    if not playerName then
+        for name, _ in pairs(self.PlayerManualRoles) do
+            QDKP2_Debug(1, "Roles", string.format("Роли %s: Авто=%s, Ручная=%s, Бонус=%s", 
+                name, 
+                tostring(self.PlayerAutoRoles[name]), 
+                tostring(self.PlayerManualRoles[name]),
+                tostring(self:GetBonusRole(name))))
+        end
+    else
+        QDKP2_Debug(1, "Roles", string.format("Роли %s: Авто=%s, Ручная=%s, Бонус=%s", 
+            playerName, 
+            tostring(self.PlayerAutoRoles[playerName]), 
+            tostring(self.PlayerManualRoles[playerName]),
+            tostring(self:GetBonusRole(playerName))))
+    end
+end
+
 -- Функция получения названия роли игрока
 function myClass.GetPlayerRole(self, playerName)
-    return self.PlayerRoles[playerName]
+    local autoRole = self.PlayerAutoRoles[playerName]
+    local manualRole = self.PlayerManualRoles[playerName]
+    
+    if manualRole == "BIS" then
+        if autoRole == "TANK" then
+            return "BIS_TANK"
+        elseif autoRole == "HEAL" then
+            return "BIS_HEAL"
+        elseif autoRole == "DD" then
+            return "BIS_DD"
+        else
+            return "BIS"  -- Бис без авто роли
+        end
+    elseif autoRole == "TANK" then
+        return "TANK"
+    elseif autoRole == "HEAL" then
+        return "HEAL"
+    elseif autoRole == "DD" then
+        return "DD"
+    end
+    
+    return nil
 end
 
 -- Функция получения отображаемого названия роли
 function myClass.GetPlayerRoleDisplay(self, playerName)
-    local role = self.PlayerRoles[playerName]
-    if role and self.RoleBonusConfig[role] then
-        return self.RoleBonusConfig[role].name
+    local autoRole = self.PlayerAutoRoles[playerName]
+    local manualRole = self.PlayerManualRoles[playerName]
+    
+    if manualRole == "BIS" then
+        if autoRole == "TANK" then
+            return "Бис Танк"
+        elseif autoRole == "HEAL" then
+            return "Бис Хил"
+        elseif autoRole == "DD" then
+            return "Бис Дпс"
+        else
+            return "Бис"  -- На случай если авто роли нет
+        end
+    elseif autoRole == "TANK" then
+        return "Танк"
+    elseif autoRole == "HEAL" then
+        return "Хил"
+    elseif autoRole == "DD" then
+        return "Дпс"
     end
+    
     return ""
 end
 
+
 -- Функция получения цвета роли
 function myClass.GetPlayerRoleColor(self, playerName)
-    local role = self.PlayerRoles[playerName]
-    if role and self.RoleBonusConfig[role] then
-        return self.RoleBonusConfig[role].color
+    local role = self:GetPlayerRole(playerName)
+    local manualRole = self.PlayerManualRoles[playerName]
+    local autoRole = self.PlayerAutoRoles[playerName]
+    
+    if manualRole == "BIS" then
+        if autoRole == "TANK" then
+            return { r = 0, g = 0.2, b = 0.6 }  -- Темно-синий для Бис Танк
+        elseif autoRole == "HEAL" then
+            return { r = 0, g = 0.5, b = 0 }  -- Темно-зеленый для Бис Хил
+        elseif autoRole == "DD" then
+            return { r = 0.6, g = 0, b = 0 }  -- Темно-красный для Бис Дпс
+        else
+            return { r = 1, g = 0.84, b = 0 }  -- Золотой для Бис (без авто роли)
+        end
+    elseif autoRole == "TANK" then
+        return { r = 0, g = 0.5, b = 1 }  -- Синий для танка
+    elseif autoRole == "HEAL" then
+        return { r = 0, g = 1, b = 0 }  -- Зеленый для хила
+    elseif autoRole == "DD" then
+        return { r = 1, g = 0.3, b = 0.3 }  -- Красный для Дпс
     end
-    return { r = 1, g = 1, b = 1 } -- белый по умолчанию
+    
+    return { r = 1, g = 1, b = 1 }  -- Белый для без роли
 end
 
 function myClass.Show(self)
@@ -1538,33 +1659,6 @@ local QuickModifyVoices = {
     },
 }
 
--- Добавляем опции ролей в меню
-local RoleVoices = {
-    BIS_Role = { 
-        text = "Назначить БИС",
-        func = function()
-            myClass:AssignRoleToSelected("BIS")
-        end
-    },
-    TankHeal_Role = { 
-        text = "Назначить ТАНК/ХИЛ", 
-        func = function()
-            myClass:AssignRoleToSelected("TANK_HEAL")
-        end
-    },
-    BisTankHeal_Role = { 
-        text = "Назначить БИС ТАНК/ХИЛ",
-        func = function()
-            myClass:AssignRoleToSelected("BIS_TANK_HEAL")
-        end
-    },
-    Clear_Role = { 
-        text = "Сбросить роль",
-        func = function()
-            myClass:AssignRoleToSelected("NONE")
-        end
-    }
-}
 
 local LogVoices = {
     -- Dictionary with all the log voices.
@@ -1588,7 +1682,7 @@ local LogVoices = {
                  menuList = QuickModifyVoices,
     },
     BonusQuickMod = { 
-        text = "|cFF7FFFD4ЦЛК Допы",
+        text = "|cFF006400ЦЛК Допы",
         hasArrow = true,
         menuList = {
             { text = "|cFF00FF00Контроль/Касты/Слизни (+200)",
@@ -1664,6 +1758,194 @@ local LogVoices = {
             },
         }
     },
+	MinusQuickMod = { 
+		text = "|cFF8B0000Минусы",
+		hasArrow = true,
+		menuList = {
+			{ text = "ЦЛК", hasArrow = true, menuList = {
+				{ text = "|cFFFF0000Общие", notClickable = true },
+				{ text = "Вайп (1500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 1500, "Вайп")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Пул (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Пул")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Тупая смерть (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Тупая смерть")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "|cFFFF0000Леди", notClickable = true },
+				{ text = "Взорвал духа (1000)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Взорванного духа")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Не снял пухи (1000)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Не снятые пухи")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Не кик касты (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Не кикнутые касты")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Не контролит (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Отсутствие контролей")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "|cFFFF0000Орк", notClickable = true },
+				{ text = "Не дал планку (1500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 1500, "Невыданную планку")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "|cFFFF0000Гниломорд/Тухлопуз", notClickable = true },
+				{ text = "Заблевал рейд (1000)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Заблёванный рейд")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Поймал пельмень (300)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 300, "Пойманный пельмень")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "|cFFFF0000Профессор", notClickable = true },
+				{ text = "Сбежался с красным (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Тесный контакт с Красным")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Полутал Колбы/Пельмень (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 1500, "скушанные Колбы/Пельмени")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "|cFFFF0000Принцы", notClickable = true },
+				{ text = "Взорвал шар в рейде (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Взрыв шара в рейде")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "|cFFFF0000Лана'тэль", notClickable = true },
+				{ text = "Не сбежался с пактом (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Не сбежался с пактом")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Не вынес тени (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Невынос теней из рейда")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "|cFFFF0000Синдрагоса", notClickable = true },
+				{ text = "Заморозил рейд (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Заморозку рейда")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Взорвал освобождёнку (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Взрыв освобождёнки")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "|cFFFF0000Лич", notClickable = true },
+				{ text = "Взорвал трапу (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Взрыв ловушки")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Не вынес чуму (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Невынос чумы")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				{ text = "Осквернение в рейд (500)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Осквернение в рейд")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				-- Добавьте свои пункты сюда
+			}},
+			{ text = "РС", hasArrow = true, menuList = {
+				{ text = "Взорванные Духи (1000)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Взорванных духов (ЦЛК)")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				-- Добавьте свои пункты сюда
+			}},
+			{ text = "ИВК", hasArrow = true, menuList = {
+				{ text = "Взорванные Духи (1000)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Взорванных духов (ИЧ)")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				-- Добавьте свои пункты сюда
+			}},
+			{ text = "Ульдуар", hasArrow = true, menuList = {
+				{ text = "Взорванные Духи (1000)",
+				  func = function()
+					  QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Взорванных духов (ОС)")
+					  QDKP2GUI_CloseMenus()
+					  QDKP2_RefreshAll()
+				  end
+				},
+				-- Добавьте свои пункты сюда
+			}},
+		}
+	},
     MyQuickMod = { 
         text = "|cFF3366FFЦЛК Бис-Хил-Танк",
         hasArrow = true,
@@ -2078,6 +2360,7 @@ function myClass.PlayerMenu(self, List)
         table.insert(menu, LogVoices.spacer)
         
         table.insert(menu, LogVoices.QuickMod)
+		table.insert(menu, LogVoices.MinusQuickMod)		
         table.insert(menu, LogVoices.BonusQuickMod)
         table.insert(menu, LogVoices.MyQuickMod)
         table.insert(menu, LogVoices.MyQuickModTwo)
@@ -2123,6 +2406,7 @@ function myClass.PlayerMenu(self, List)
         table.insert(menu, LogVoices.spacer)
         
         table.insert(menu, LogVoices.QuickMod)
+		table.insert(menu, LogVoices.MinusQuickMod)
         table.insert(menu, LogVoices.BonusQuickMod)
         table.insert(menu, LogVoices.MyQuickMod)
         table.insert(menu, LogVoices.MyQuickModTwo)
@@ -2573,3 +2857,86 @@ function myClass.SortBy(self, order)
 end
 
 QDKP2GUI_Roster = myClass
+
+------------------------------------------------------------
+-- AUTO ROLE SYSTEM (LibGroupTalents)
+------------------------------------------------------------
+
+local function ConvertGTToQDKPRole(gtRole)
+    if gtRole == "tank" then
+        return "TANK"
+    elseif gtRole == "healer" then
+        return "HEAL"
+    else
+        return "DD"
+    end
+end
+
+function myClass.UpdateUnitRole(self, unit)
+    if not unit or not UnitExists(unit) then return end
+
+    local name = UnitName(unit)
+    if not name then return end
+
+    local lib = LibStub:GetLibrary("LibGroupTalents-1.0", true)
+    if not lib then return end
+
+    local gtRole = lib:GetUnitRole(unit)
+    if not gtRole then return end
+
+    -- Сохраняем только автоматическую роль
+    self.PlayerAutoRoles[name] = ConvertGTToQDKPRole(gtRole)
+end
+
+function myClass.GetBonusRole(self, playerName)
+    local autoRole = self.PlayerAutoRoles[playerName]  -- TANK/HEAL/DD
+    local manualRole = self.PlayerManualRoles[playerName]  -- BIS или nil
+    
+    -- Если нет роли, возвращаем nil
+    if not autoRole and not manualRole then
+        return nil
+    end
+    
+    -- Комбинируем роли для бонусной системы
+    if manualRole == "BIS" then
+        if autoRole == "TANK" or autoRole == "HEAL" then
+            return "BIS_TANK_HEAL"  -- БИС Танк или БИС Хил (оба получают один бонус)
+        elseif autoRole == "DD" then
+            return "BIS"  -- БИС Дпс
+        else
+            return "BIS"  -- Если авто роли нет, просто БИС
+        end
+    elseif autoRole == "TANK" or autoRole == "HEAL" then
+        return "TANK_HEAL"  -- Обычный Танк/Хил
+    end
+    
+    return nil  -- Обычный Дпс без бонуса
+end
+
+function myClass.ScanRaidRoles(self)
+    local num = GetNumRaidMembers()
+    for i = 1, num do
+        self:UpdateUnitRole("raid"..i)
+    end
+end
+
+function myClass.InitTalentRoleSystem(self)
+    local lib = LibStub:GetLibrary("LibGroupTalents-1.0", true)
+    if not lib then
+        QDKP2_Debug(1, "Roles", "LibGroupTalents не найден")
+        return
+    end
+
+    lib.RegisterCallback(self, "LibGroupTalents_RoleChange")
+    lib.RegisterCallback(self, "LibGroupTalents_Update")
+end
+
+function myClass:LibGroupTalents_RoleChange(event, guid, unit)
+    self:UpdateUnitRole(unit)
+    self:Refresh()
+end
+
+function myClass:LibGroupTalents_Update(event, guid, unit)
+    self:UpdateUnitRole(unit)
+    self:Refresh()
+end

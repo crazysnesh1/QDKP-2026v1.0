@@ -1,13 +1,14 @@
 ## Interface: 30300
 ## Title: Quick DKP V2 - Core
 ## Author: Edited by CoolSnesh
-## Version: 2026v1.0
+## Version: 2026v1.1
 ## Notes: Комплексная система для начисления ДКП и управления гильдией
 ## OptionalDeps: AtlasLoot, DBM-Core, BigWigs
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: QDKP2_Data, QDKP2_Debug_List, QDKP2_RosterRolesDB, QDKP2_NotesCacheDB
 ## SavedVariablesPerCharacter: QDKP2backup
+
 
 Code\Lib\LibStub.lua
 Code\Lib\AceLibrary.lua
@@ -24,6 +25,7 @@ Code\Lib\Deformat-2.0.lua
 
 Code\Lib\UTF8\utf8data.lua
 Code\Lib\UTF8\utf8.lua
+
 
 Options.lua
 Code\Core\DKP_Editing.lua

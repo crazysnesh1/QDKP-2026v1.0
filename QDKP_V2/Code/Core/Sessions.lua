@@ -89,7 +89,7 @@ function QDKP2_StopSession(sure)
 
     -- Затем проверяем роли и показываем диалог
     local roleCount = 0
-    if QDKP2GUI_Roster and QDKP2GUI_Roster.PlayerRoles then
+    if QDKP2GUI_Roster and QDKP2GUI_Roster.PlayerManualRoles then
         roleCount = QDKP2GUI_Roster:CountRoles()
     end
     
