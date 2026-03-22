@@ -1,7 +1,7 @@
 <div align="center">
   
 # QDKPv2 - За основу взял русифицированную версию **@Joneil7**
-  Скачайть последний релиз можно [тут](https://github.com/crazysnesh1/QDKP-2026v1.0/releases/latest)
+##  Скачайть последний релиз можно [тут](https://github.com/crazysnesh1/QDKP-2026v1.0/releases/latest)
 </div>
 
 ## Изменения v1.0:
