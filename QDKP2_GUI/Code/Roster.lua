@@ -37,7 +37,8 @@ myClass.ColumnWidth = {
     bid = 55,
     value = 50,
     officer = 140,
-    role = 70  -- КОЛОНКА ДЛЯ РОЛЕЙ
+    role = 70,
+    lastonline = 115,
 }
 
 myClass.Sort = {
@@ -71,37 +72,46 @@ myClass.SearchByMain = false
 myClass.SearchBox = nil
 
 myClass.officerNoteCache = {} -- кеш для заметок игроков
+-- Глобальные таблицы для хранения последнего онлайна
+QDKP2_lastonline_text = QDKP2_lastonline_text or {}
+QDKP2_lastonline_minutes = QDKP2_lastonline_minutes or {}
 
 -- Sort values
-myClass.Sort.Values.BidValue = 2048
-myClass.Sort.Values.BidText = 1024
-myClass.Sort.Values.BidRoll = 512
-myClass.Sort.Values.Alpha = 256
-myClass.Sort.Values.Rank = 128
-myClass.Sort.Values.Class = 64
-myClass.Sort.Values.Officer = 48
-myClass.Sort.Values.Role = 96  -- СОРТИРОВКА ПО РОЛЯМ
-myClass.Sort.Values.Net = 32
-myClass.Sort.Values.Total = 16
-myClass.Sort.Values.Spent = 8
-myClass.Sort.Values.Hours = 4
-myClass.Sort.Values.SessGain = 2
-myClass.Sort.Values.SessSpent = 1
+myClass.Sort.Values = {
+    BidValue = 2048,
+    BidText = 1024,
+    BidRoll = 512,
+    Alpha = 256,
+    Rank = 128,
+    Class = 64,
+    Officer = 48,
+    Role = 96,
+    Net = 32,
+    Total = 16,
+    Spent = 8,
+    Hours = 4,
+    SessGain = 2,
+    SessSpent = 1,
+    LastOnline = 32,
+}
 
-myClass.Sort.Reverse.BidValue = true
-myClass.Sort.Reverse.BidText = true
-myClass.Sort.Reverse.BidRoll = true
-myClass.Sort.Reverse.Alpha = false
-myClass.Sort.Reverse.Rank = false
-myClass.Sort.Reverse.Class = false
-myClass.Sort.Reverse.Officer = false
-myClass.Sort.Reverse.Role = false  -- ДЛЯ РОЛЕЙ
-myClass.Sort.Reverse.Net = true
-myClass.Sort.Reverse.Total = true
-myClass.Sort.Reverse.Spent = true
-myClass.Sort.Reverse.Hours = true
-myClass.Sort.Reverse.SessGain = true
-myClass.Sort.Reverse.SessSpent = true
+myClass.Sort.Reverse = {
+    BidValue = true,
+    BidText = true,
+    BidRoll = true,
+    Alpha = false,
+    Rank = false,
+    Class = false,
+    Officer = false,
+    Role = false,
+    Net = true,
+    Total = true,
+    Spent = true,
+    Hours = true,
+    SessGain = true,
+    SessSpent = true,
+    LastOnline = false,
+}
 
 -- Локализация для кнопки исключения из гильдии
 QDKP2_LOC_GUIREMOVEFROMGUILD = "Исключить из гильдии"
@@ -127,6 +137,12 @@ function myClass.OnLoad(self)
     
     -- Регистрируем события для сохранения
     self:RegisterEvents()
+	
+	-- Установка локализованного текста для кнопки "Последний онлайн"
+    local lastOnlineBtn = _G["QDKP2_Frame2_SortBtn_lastonline"]
+    if lastOnlineBtn then
+        lastOnlineBtn:SetText(QDKP2_LOC_GUIPLAYERLASTONLINE)
+    end
     
     QDKP2_Debug(2, "GUI-Roster", "Roster loaded successfully.")
 end
@@ -371,11 +387,13 @@ function myClass.CreateICCTimerButtons(self)
     hooksecurefunc(self, "Refresh", UpdateVisibility)
 end
 
+
 -- Функция регистрации событий
 function myClass.RegisterEvents(self)
     self.Frame:RegisterEvent("PLAYER_LOGOUT")
     self.Frame:RegisterEvent("PLAYER_ENTERING_WORLD")
     self.Frame:RegisterEvent("RAID_ROSTER_UPDATE")
+    self.Frame:RegisterEvent("GUILD_ROSTER_UPDATE")   -- добавить
 
     self.Frame:SetScript("OnEvent", function(frame, event, ...)
         if event == "PLAYER_LOGOUT" then
@@ -384,8 +402,16 @@ function myClass.RegisterEvents(self)
         elseif event == "PLAYER_ENTERING_WORLD" then
             self:LoadNotesCache()
         elseif event == "RAID_ROSTER_UPDATE" then
-            -- Ничего не делаем, роли обновляются в RoleBonus.lua
-        end
+            -- роли обновляются в RoleBonus.lua
+        elseif event == "GUILD_ROSTER_UPDATE" then
+			self:UpdateLastOnlineData()
+			self:Refresh()
+			-- повторное обновление через 0.5 сек для надёжности
+			C_Timer.After(0.5, function()
+				self:UpdateLastOnlineData()
+				self:Refresh()
+			end)
+		end
     end)
 end
 
@@ -457,6 +483,61 @@ function myClass.CountNotes(self)
         end
     end
     return count
+end
+
+-- Форматирование строки последнего онлайна
+function myClass.FormatLastOnline(years, months, days, hours)
+    if years and years > 0 then
+        return years .. " " .. QDKP2_LOC_STATUS_YEARS_AGO
+    elseif months and months > 0 then
+        return months .. " " .. QDKP2_LOC_STATUS_MONTHS_AGO
+    elseif days and days > 0 then
+        return days .. " " .. QDKP2_LOC_STATUS_DAYS_AGO
+    elseif hours and hours > 0 then
+        if hours == 1 then
+            return QDKP2_LOC_STATUS_HOUR_AGO
+        else
+            return hours .. " " .. QDKP2_LOC_STATUS_HOURS_AGO
+        end
+    else
+        return QDKP2_LOC_STATUS_LESS_HOUR
+    end
+end
+
+function myClass.UpdateLastOnlineData()
+    if not IsInGuild() then return end
+    local num = GetNumGuildMembers()
+    if num == 0 then return end
+    for i = 1, num do
+        local name, _, _, _, _, _, _, _, online = GetGuildRosterInfo(i)
+        if name then
+            name = strsplit("-", name)
+            if online then
+                QDKP2_lastonline_text[name] = QDKP2_LOC_STATUS_ONLINE
+                QDKP2_lastonline_minutes[name] = 0
+            else
+                local years, months, days, hours = GetGuildRosterLastOnline(i)
+                -- Если функция вернула числа (стандартный случай WotLK)
+                if years and type(years) == "number" then
+                    years = years or 0
+                    months = months or 0
+                    days = days or 0
+                    hours = hours or 0
+                    local minutes = years * 525600 + months * 43200 + days * 1440 + hours * 60
+                    -- Если все параметры нулевые — это случай "< an hour ago"
+                    if minutes == 0 then
+                        minutes = 1   -- чтобы шли после Online (0) и до 1 hour (60)
+                    end
+                    QDKP2_lastonline_minutes[name] = minutes
+                    QDKP2_lastonline_text[name] = myClass.FormatLastOnline(years, months, days, hours)
+                else
+                    -- Данные ещё не загружены или игрок не в гильдии
+                    QDKP2_lastonline_text[name] = QDKP2_lastonline_text[name] or ""
+                    QDKP2_lastonline_minutes[name] = QDKP2_lastonline_minutes[name] or nil
+                end
+            end
+        end
+    end
 end
 
 function myClass.Show(self)
@@ -587,6 +668,7 @@ function myClass.Refresh(self, forceResort)
         myClass:ShowColumn('value', false)
         myClass:ShowColumn('officer', true)
         myClass:ShowColumn('role', true)
+		myClass:ShowColumn('lastonline', true)
         QDKP2_Frame2_sesscount:Hide()
         QDKP2_Frame2_SessionZone:Hide()
         QDKP2_Frame2_bidcount:Hide()
@@ -608,6 +690,7 @@ function myClass.Refresh(self, forceResort)
         myClass:ShowColumn('value', false)
         myClass:ShowColumn('officer', true)
         myClass:ShowColumn('role', true)
+		myClass:ShowColumn('lastonline', false)
         QDKP2_Frame2_sesscount:Show()
         QDKP2_Frame2_SessionZone:Show()
         QDKP2_Frame2_bidcount:Hide()
@@ -625,6 +708,7 @@ function myClass.Refresh(self, forceResort)
         myClass:ShowColumn('value', true)
         myClass:ShowColumn('officer', true)
         myClass:ShowColumn('role', true)
+		myClass:ShowColumn('lastonline', false)
         QDKP2_Frame2_sesscount:Show()
         QDKP2_Frame2_SessionZone:Show()
         QDKP2_Frame2_bidcount:Show()
@@ -769,6 +853,27 @@ function myClass.Refresh(self, forceResort)
                 bid = '';
                 value = ''
             end
+			-- Last Online
+			if self.Sel == "guild" then
+				local lastOnlineText = QDKP2_lastonline_text[name] or ""
+				getglobal(ParentName .. "_lastonline"):SetText(lastOnlineText)
+
+				-- Определяем цвет
+				local rCol, gCol, bCol
+				if QDKP2online and QDKP2online[name] then
+					rCol, gCol, bCol = 1, 1, 1          -- белый для онлайн
+				else
+					local minutes = QDKP2_lastonline_minutes[name] or 0
+					if minutes > 7 * 24 * 60 then
+						rCol, gCol, bCol = 1, 0.2, 0.2   -- красный для отсутствия >7 дней
+					else
+						rCol, gCol, bCol = 0.5, 0.5, 0.5 -- серый для оффлайн (менее 7 дней)
+					end
+				end
+				getglobal(ParentName .. "_lastonline"):SetVertexColor(rCol, gCol, bCol, a)
+			else
+				getglobal(ParentName .. "_lastonline"):SetText("")
+			end
             rank = QDKP2rank[name]
             
             officerNote = self.officerNoteCache[name] or ''
@@ -1491,7 +1596,7 @@ local LogVoices = {
                 },
                 { text = "Полутал Колбы/Пельмень (500)",
                   func = function()
-                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 1500, "скушанные Колбы/Пельмени")
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "скушанные Колбы/Пельмени")
                       QDKP2GUI_CloseMenus()
                       QDKP2_RefreshAll()
                   end
@@ -1558,27 +1663,86 @@ local LogVoices = {
                 },
             }},
             { text = "РС", hasArrow = true, menuList = {
-                { text = "Взорванные Духи (1000)",
+                { text = "|cFFFF0000Общие", notClickable = true },
+                { text = "Вайп (1500)",
                   func = function()
-                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Взорванных духов (ЦЛК)")
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 1500, "Вайп")
+                      QDKP2GUI_CloseMenus()
+                      QDKP2_RefreshAll()
+                  end
+                },
+                { text = "Пул (500)",
+                  func = function()
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Пул")
+                      QDKP2GUI_CloseMenus()
+                      QDKP2_RefreshAll()
+                  end
+                },
+                { text = "Сагрил треш (500)",
+                  func = function()
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Агр Треша на Миниках")
+                      QDKP2GUI_CloseMenus()
+                      QDKP2_RefreshAll()
+                  end
+                },
+				{ text = "|cFFFF0000Савиана", notClickable = true },
+                { text = "Не вынес метку (-300)",
+                  func = function()
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 300, "Не вынос Метки")
+                      QDKP2GUI_CloseMenus()
+                      QDKP2_RefreshAll()
+                  end
+                },
+				{ text = "|cFFFF0000Халион", notClickable = true },
+                { text = "Смерть от падения Метеора (-1000)",
+                  func = function()
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Смерть от падения Метеора")
+                      QDKP2GUI_CloseMenus()
+                      QDKP2_RefreshAll()
+                  end
+                },				
+				{ text = "Смерть в огне Метеора (-500)",
+                  func = function()
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Смерть в огне Метеора")
+                      QDKP2GUI_CloseMenus()
+                      QDKP2_RefreshAll()
+                  end
+                },
+				{ text = "Смерть от Лезвий (-500)",
+                  func = function()
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Смерть от Лезвий")
+                      QDKP2GUI_CloseMenus()
+                      QDKP2_RefreshAll()
+                  end
+                },
+				{ text = "Не вынес Метку (-500)",
+                  func = function()
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Не вынос Метки")
+                      QDKP2GUI_CloseMenus()
+                      QDKP2_RefreshAll()
+                  end
+                },
+				{ text = "Не кидает Фридом (-300)",
+                  func = function()
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 300, "Не кинутый Фридом")
                       QDKP2GUI_CloseMenus()
                       QDKP2_RefreshAll()
                   end
                 },
             }},
             { text = "ИВК", hasArrow = true, menuList = {
-                { text = "Взорванные Духи (1000)",
+                { text = "Не заполненно (-1)",
                   func = function()
-                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Взорванных духов (ИЧ)")
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 1, "Не заполненно")
                       QDKP2GUI_CloseMenus()
                       QDKP2_RefreshAll()
                   end
                 },
             }},
             { text = "Ульдуар", hasArrow = true, menuList = {
-                { text = "Взорванные Духи (1000)",
+                { text = "Не заполненно (-1)",
                   func = function()
-                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Взорванных духов (ОС)")
+                      QDKP2_PlayerSpends(myClass.SelectedPlayers, 1, "Не заполненно")
                       QDKP2GUI_CloseMenus()
                       QDKP2_RefreshAll()
                   end
@@ -2184,6 +2348,24 @@ local function SortComparitor(val1, val2)
         compare = compare + increment;
     end
 
+	-- Last Online
+	local minutes1 = QDKP2_lastonline_minutes[val1]
+	local minutes2 = QDKP2_lastonline_minutes[val2]
+
+	-- Нет данных → в конец (используем очень большое число)
+	if minutes1 == nil then minutes1 = math.huge end
+	if minutes2 == nil then minutes2 = math.huge end
+
+	if Reverse.LastOnline then
+		minutes1, minutes2 = minutes2, minutes1
+	end
+	increment = Values.LastOnline
+	if minutes1 < minutes2 then
+		compare = compare - increment
+	elseif minutes1 > minutes2 then
+		compare = compare + increment
+	end
+
     -- Net
     test1 = QDKP2_GetNet(val1) or QDKP2_MINIMUM_NET
     test2 = QDKP2_GetNet(val2) or QDKP2_MINIMUM_NET
@@ -2363,6 +2545,8 @@ function myClass.SortList(self, Order, List, forceResort)
         lastmax = Values.Officer
     elseif (Order == "Role") then
         lastmax = Values.Role
+	elseif (Order == "LastOnline") then
+		lastmax = Values.LastOnline	
     elseif (Order == "Net") then
         lastmax = Values.Net
     elseif (Order == "Total") then
@@ -2400,6 +2584,9 @@ function myClass.SortList(self, Order, List, forceResort)
     if (Values.Role > lastmax) then
         Values.Role = Values.Role / 2;
     end
+    if (Values.LastOnline > lastmax) then
+        Values.LastOnline = Values.LastOnline / 2;
+    end	
     if (Values.Net > lastmax) then
         Values.Net = Values.Net / 2;
     end
@@ -2437,6 +2624,8 @@ function myClass.SortList(self, Order, List, forceResort)
         Values.Officer = 2048
     elseif (Order == "Role") then
         Values.Role = 2048
+	elseif (Order == "LastOnline") then
+		Values.LastOnline = 2048	
     elseif (Order == "Net") then
         Values.Net = 2048
     elseif (Order == "Total") then

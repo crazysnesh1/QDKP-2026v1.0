@@ -6,7 +6,7 @@
 ## OptionalDeps: AtlasLoot, DBM-Core, BigWigs
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
-## SavedVariables: QDKP2_Data, QDKP2_Debug_List, QDKP2_RosterRolesDB, QDKP2_NotesCacheDB
+## SavedVariables: QDKP2_Data, QDKP2_Debug_List, QDKP2_NotesCacheDB, QDKP2_RolesDB
 ## SavedVariablesPerCharacter: QDKP2backup
 
 

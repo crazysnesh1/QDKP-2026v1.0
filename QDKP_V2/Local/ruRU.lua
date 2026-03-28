@@ -412,7 +412,19 @@ if GetLocale() == 'ruRU' then
     QDKP2_LOC_GUIYES = "Да"
     QDKP2_LOC_GUINO = "Нет"
 
-
+	-- Last online status localization
+	QDKP2_LOC_GUIPLAYERLASTONLINE = "Посл. вход"	
+	QDKP2_LOC_STATUS_ONLINE = "В сети"
+	QDKP2_LOC_STATUS_LESS_HOUR = "< часа"
+	QDKP2_LOC_STATUS_HOUR_AGO = "час"
+	QDKP2_LOC_STATUS_HOURS_AGO = "часов"
+	QDKP2_LOC_STATUS_DAY_AGO = "день"
+	QDKP2_LOC_STATUS_DAYS_AGO = "дней"
+	QDKP2_LOC_STATUS_MONTH_AGO = "месяц"
+	QDKP2_LOC_STATUS_MONTHS_AGO = "месяца"
+	QDKP2_LOC_STATUS_YEAR_AGO = "год"
+	QDKP2_LOC_STATUS_YEARS_AGO = "лет"
+	
     -- ALTS
     QDKP2_LOC_ALTS_NOT_CLEAR_ALT_RELATIONS = "Привязка альта возможна только вне открытой сессии."
     QDKP2_LOC_ALTS_ALT_IS_NIL = "Невозможно изменить привязку альта. Альт не выбран(не найден)."

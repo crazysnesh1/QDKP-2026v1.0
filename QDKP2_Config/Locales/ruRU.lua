@@ -159,8 +159,8 @@ L.BM_AnnounceStartStepChannel = "Канал"
 L.BM_AnnounceStartStepText = "Текст начала торгов + мин. ставка/шаг"
 L.BM_AnnounceStartStepText_d = "Текст, используемый при объявлении торгов. $ITEM - название предмета, $BID - мин ставка, $STEP - мин шаг."
 L.BM_MinStep = "Мин шаг"
-L.BM_Step1 = "Шаг после прога 1"
-L.BM_Step2 = "Шаг после прога 2"
+L.BM_Step1 = "Шаг после порога 1"
+L.BM_Step2 = "Шаг после порога 2"
 L.BM_BidStep1 = "Порог 1"
 L.BM_BidStep2 = "Порог 2"
 L.BM_BidStep_d = "Если ставка больше или равна данному значению, то мин шаг будет увеличен"
@@ -408,10 +408,8 @@ L.LOOTPriceInst = "Цена за инст"
 L.LOOTPriceItem = "Цена за предмет"
 
 --Messages
-L.BRC_SendExternals = 'Отправить Экстерналов'
-L.BRC_SendAlts = 'Отправить Альтов'
-L.BRC_ToolExternals = 'Отправить список внешних участников всей гильдии'
-L.BRC_ToolAlts = 'Отправить привязки участников "Мейн-Альт" гильдии'
+L.BRC_SendSync = 'Отправить синхронизацию'
+L.BRC_ToolSync = 'Отправить списки внешних игроков и альтов всей гильдии'
 
 L.MESS_AllowImport = "%s хотел отправить настройки профиля\
     для QDKP.\

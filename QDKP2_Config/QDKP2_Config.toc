@@ -25,4 +25,4 @@ ConfigTree\GUI.lua
 ConfigTree\Looting.lua
 ConfigTree\Misc.lua
 ConfigTree\ODS.lua
-
+ConfigTree\ExternalsAltsSync.lua

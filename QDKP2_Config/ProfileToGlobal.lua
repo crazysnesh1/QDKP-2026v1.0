@@ -146,7 +146,7 @@ QDKP2_Config.TransTable={
 	LOOT_LootsLog='QDKP2_LogLoots',
 	LOOT_LootsNoLog='QDKP2_NotLogLoots',
 
---Misc
+	--Misc
 	MISC_MaxNetDKP='QDKP2_MAXIMUM_NET',
 	MISC_MinNetDKP='QDKP2_MINIMUM_NET',
 	AW_SpecialRanks='QDKP2_UNDKPABLE_RANK',

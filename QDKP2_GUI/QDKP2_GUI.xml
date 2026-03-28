@@ -1264,7 +1264,7 @@
 
     <Button name="QDKP2_frame2_entry_template" virtual="true">
         <Size>
-            <AbsDimension x="930" y="14"/>
+            <AbsDimension x="1045" y="14"/>
         </Size>
         <Layers>
             <Layer level="ARTWORK">
@@ -1439,6 +1439,15 @@
 						<Anchor point="TOPLEFT" relativeTo="$parent_deltatotal" relativePoint="TOPRIGHT"/>
 					</Anchors>
 				</FontString>
+				<!-- НОВЫЙ СТОЛБЕЦ ПОСЛЕДНЕГО ОНЛАЙНА -->
+				<FontString name="$parent_lastonline" inherits="GameFontHighlightSmall" justifyH="CENTER" text="">
+					<Size>
+						<AbsDimension x="115" y="14"/>
+					</Size>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="$parent_deltaspent" relativePoint="TOPRIGHT"/>
+					</Anchors>
+				</FontString>
             </Layer>
         </Layers>
         <Scripts>
@@ -1458,7 +1467,7 @@
 
     <Frame name="QDKP2_Frame2" inherits="QDKP2DialogTitled">
         <Size>
-            <AbsDimension x="980" y="380"/>
+            <AbsDimension x="1095" y="380"/>
         </Size>
         <Anchors>
             <Anchor relativePoint="TOPLEFT" point="TOPLEFT">
@@ -1908,6 +1917,7 @@
                     <Anchor relativePoint="BOTTOMLEFT" relativeTo="QDKP2_frame2_entry19" point="TOPLEFT"/>
                 </Anchors>
             </Button>
+			
 
 
             <!-- Title buttons-->
@@ -2077,7 +2087,19 @@
                     <OnClick>QDKP2GUI_Roster:SortBy("SessSpent")</OnClick>
                 </Scripts>
             </Button>
-
+			
+			<!-- НОВАЯ КНОПКА СОРТИРОВКИ ДЛЯ ПОСЛЕДНЕГО ОНЛАЙНА -->
+			<Button name="$parent_SortBtn_lastonline" inherits="UIPanelButtonTemplate" text="Last online">
+				<Size>
+					<AbsDimension x="115" y="25"/> </Size>
+				<Anchors>
+					<Anchor relativePoint="LEFT" point="LEFT" relativeTo="QDKP2_frame2_title_lastonline"/>
+                    <Anchor relativePoint="RIGHT" point="RIGHT" relativeTo="QDKP2_frame2_title_lastonline"/>					
+					</Anchors>
+				<Scripts>
+					<OnClick>QDKP2GUI_Roster:SortBy("LastOnline")</OnClick>
+				</Scripts>
+			</Button>
 
             <Button name="QDKP2_frame2_showRaid" inherits="UIPanelButtonTemplate" text="QDKP2_LOC_GUIRAIDLOG">
                 <Size>

@@ -89,8 +89,8 @@ function QDKP2_StopSession(sure)
 
     -- Затем проверяем роли и показываем диалог
     local roleCount = 0
-    if QDKP2GUI_Roster and QDKP2GUI_Roster.PlayerManualRoles then
-        roleCount = QDKP2GUI_Roster:CountRoles()
+    if QDKP2_CountManualRoles then
+        roleCount = QDKP2_CountManualRoles()
     end
     
     if roleCount > 0 and not sure then
@@ -140,8 +140,8 @@ function QDKP2_DoStopSession(sure, resetRoles)
     QDKP2_BidM_CountdownCancel()
 
     -- Сбрасываем роли только если нужно
-    if resetRoles and QDKP2GUI_Roster and QDKP2GUI_Roster.ResetRolesOnSessionClose then
-        QDKP2GUI_Roster:ResetRolesOnSessionClose()
+    if resetRoles and QDKP2_ResetRolesOnSessionClose then
+        QDKP2_ResetRolesOnSessionClose()
         QDKP2_Msg("Сессия закрыта. Роли сброшены.")
     else
         QDKP2_Msg("Сессия закрыта. Роли сохранены.")
