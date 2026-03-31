@@ -29,7 +29,7 @@
 > - Добавлена система авто-определения ролей
 > - Добавлен анонс при достижении порога и увеличении минимальной ставки <img src="https://cdn-icons-png.flaticon.com/128/5968/5968756.png" height=18 />easyw0w
 > - Исправлено начисление за Халиона если хост во тьме <img src="https://cdn-icons-png.flaticon.com/128/5968/5968756.png" height=18 />easyw0w
-> - Добавлленно определение ХМ режима для накса на WoWCircle <img src="https://cdn-icons-png.flaticon.com/128/5968/5968756.png" height=18 />easyw0w
+> - Добавлено определение ХМ режима для накса на WoWCircle <img src="https://cdn-icons-png.flaticon.com/128/5968/5968756.png" height=18 />easyw0w
 
 ## ☑️Изменения v1.1.1:
 > [!NOTE]
