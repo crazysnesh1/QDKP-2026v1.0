@@ -36,9 +36,9 @@ myClass.ColumnWidth = {
     roll = 40,
     bid = 55,
     value = 50,
-    officer = 140,
+    public = 165,
     role = 70,
-    lastonline = 115,
+    lastonline = 90,
 }
 
 myClass.Sort = {
@@ -71,7 +71,9 @@ myClass.SearchText = ""
 myClass.SearchByMain = false
 myClass.SearchBox = nil
 
-myClass.officerNoteCache = {} -- кеш для заметок игроков
+-- Кэш публичных заметок (обновляется автоматически при GUILD_ROSTER_UPDATE)
+myClass.publicNoteCache = {}
+
 -- Глобальные таблицы для хранения последнего онлайна
 QDKP2_lastonline_text = QDKP2_lastonline_text or {}
 QDKP2_lastonline_minutes = QDKP2_lastonline_minutes or {}
@@ -84,7 +86,7 @@ myClass.Sort.Values = {
     Alpha = 256,
     Rank = 128,
     Class = 64,
-    Officer = 48,
+    Public = 48,
     Role = 96,
     Net = 32,
     Total = 16,
@@ -102,7 +104,7 @@ myClass.Sort.Reverse = {
     Alpha = false,
     Rank = false,
     Class = false,
-    Officer = false,
+    Public = false,
     Role = false,
     Net = true,
     Total = true,
@@ -125,22 +127,19 @@ function myClass.OnLoad(self)
     self.MenuFrame = CreateFrame("Frame", "QDKP2_Frame2_DropDownMenu", self.Frame, "UIDropDownMenuTemplate")
     self.SubMenuFrame = CreateFrame("Frame", "QDKP2_Frame2_DropDownMenu", self.MenuFrame, "UIDropDownMenuTemplate")
     
-    -- Загружаем сохраненные заметки
-    self:LoadNotesCache()
-    
-    -- Создаем UI элементы
+    -- Создаем UI элементы (кнопка "Up" не создаётся!)
     self:CreateSearchUI()
     self:CreateRoleUI()
     self:CreateNonGuildUI()
     self:CreateICCTimerButtons()
-    self:CreateNotesButton()
-	
-	-- Установка флага показа оффлайн
+    
+    -- Установка флага показа оффлайн
     SetGuildRosterShowOffline(true)
-    -- Регистрируем события для сохранения
+    
+    -- Регистрируем события
     self:RegisterEvents()
-	
-	-- Установка локализованного текста для кнопки "Последний онлайн"
+    
+    -- Установка локализованного текста для кнопки "Последний онлайн"
     local lastOnlineBtn = _G["QDKP2_Frame2_SortBtn_lastonline"]
     if lastOnlineBtn then
         lastOnlineBtn:SetText(QDKP2_LOC_GUIPLAYERLASTONLINE)
@@ -233,30 +232,6 @@ function myClass.CreateRoleUI(self)
     self.RoleButton:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
-end
-
--- Создаем кнопку для обновления заметок
-function myClass.CreateNotesButton(self)
-    self.NotesButton = CreateFrame("Button", "QDKP2_Frame2_NotesButton", self.Frame, "UIPanelButtonTemplate")
-    self.NotesButton:SetSize(42, 25)
-    self.NotesButton:SetPoint("LEFT", "QDKP2_Frame2_SortBtn_officer", "RIGHT", 0, 0)
-    self.NotesButton:SetText("«Up»") 
-    
-    -- Функция для яркой покраски
-    local function PaintBlue(btn)
-        for _, tex in pairs({btn:GetRegions()}) do
-            if tex:GetObjectType() == "Texture" then
-                tex:SetVertexColor(0.4, 0.7, 1) 
-            end
-        end
-    end
-
-    PaintBlue(self.NotesButton)
-
-    local sortBtnNotes = _G["QDKP2_Frame2_SortBtn_officer"]
-    if sortBtnNotes then PaintBlue(sortBtnNotes) end
-
-    self.NotesButton:SetScript("OnClick", function() self:RefreshNotesCache() end)
 end
 
 -- Создаем интерфейс кнопки "Пуги"
@@ -389,102 +364,47 @@ function myClass.CreateICCTimerButtons(self)
     hooksecurefunc(self, "Refresh", UpdateVisibility)
 end
 
+-- Функция обновления кэша публичных заметок
+function myClass.UpdatePublicNotesCache(self)
+    if not IsInGuild() then return end
+    local total = GetNumGuildMembers()
+    for i = 1, total do
+        local name, _, _, _, _, _, note = GetGuildRosterInfo(i)
+        if name then
+            name = strsplit("-", name)
+            self.publicNoteCache[name] = note or ""
+        end
+    end
+end
 
 -- Функция регистрации событий
 function myClass.RegisterEvents(self)
     self.Frame:RegisterEvent("PLAYER_LOGOUT")
     self.Frame:RegisterEvent("PLAYER_ENTERING_WORLD")
     self.Frame:RegisterEvent("RAID_ROSTER_UPDATE")
-    self.Frame:RegisterEvent("GUILD_ROSTER_UPDATE")   -- добавить
+    self.Frame:RegisterEvent("GUILD_ROSTER_UPDATE")
 
     self.Frame:SetScript("OnEvent", function(frame, event, ...)
         if event == "PLAYER_LOGOUT" then
-            self:SaveNotesCache()
-            QDKP2_Debug(2, "Roster", "Заметки сохранены при выходе из игры")
+            -- Ничего не сохраняем, заметки не требуют сохранения
+            QDKP2_Debug(2, "Roster", "Игрок вышел, заметки не сохраняются")
         elseif event == "PLAYER_ENTERING_WORLD" then
-            self:LoadNotesCache()
+            -- При входе в мир сразу запросим гильдию
+            GuildRoster()
         elseif event == "RAID_ROSTER_UPDATE" then
             -- роли обновляются в RoleBonus.lua
         elseif event == "GUILD_ROSTER_UPDATE" then
-			self:UpdateLastOnlineData()
-			self:Refresh()
-			-- повторное обновление через 0.5 сек для надёжности
-			C_Timer.After(0.5, function()
-				self:UpdateLastOnlineData()
-				self:Refresh()
-			end)
-		end
+            self:UpdatePublicNotesCache()   -- обновляем заметки
+            self:UpdateLastOnlineData()
+            self:Refresh()
+            -- повторное обновление через 0.5 сек для надёжности
+            C_Timer.After(0.5, function()
+                self:UpdatePublicNotesCache()
+                self:UpdateLastOnlineData()
+                self:Refresh()
+            end)
+        end
     end)
-end
-
--- ФУНКЦИЯ ОБНОВЛЕНИЯ КЭША ЗАМЕТОК
-function myClass.RefreshNotesCache(self)
-    if not self.List or #self.List == 0 then
-        QDKP2_Msg("Список игроков пуст")
-        return
-    end
-    
-    QDKP2_Msg("Обновляю заметки...")
-    
-    QDKP2_DownloadGuild()
-    
-    local totalMembers = QDKP2_GetNumGuildMembers(true)
-    local updatedCount = 0
-    
-    local listLookup = {}
-    for _, name in ipairs(self.List) do
-        listLookup[name] = true
-    end
-    
-    for i = 1, totalMembers do
-        local name, _, _, _, _, _, note = QDKP2_GetGuildRosterInfo(i)
-        if name and listLookup[name] then
-            if note and note ~= "" then
-                self.officerNoteCache[name] = note
-                updatedCount = updatedCount + 1
-            else
-                self.officerNoteCache[name] = nil
-            end
-        end
-    end
-    
-    self:SaveNotesCache()
-    self:Refresh()
-    
-    QDKP2_Msg(string.format("Заметки обновлены: %d игроков", updatedCount))
-end
-
--- ЗАГРУЗКА КЭША ЗАМЕТОК
-function myClass.LoadNotesCache(self)
-    QDKP2_NotesCacheDB = QDKP2_NotesCacheDB or {}
-    
-    self.officerNoteCache = {}
-    for playerName, note in pairs(QDKP2_NotesCacheDB) do
-        self.officerNoteCache[playerName] = note
-    end
-    
-    QDKP2_Debug(2, "Notes", "Кеш заметок загружен. Записей: " .. tostring(self:CountNotes()))
-end
-
--- СОХРАНЕНИЕ КЭША ЗАМЕТОК
-function myClass.SaveNotesCache(self)
-    QDKP2_NotesCacheDB = {}
-    for playerName, note in pairs(self.officerNoteCache) do
-        QDKP2_NotesCacheDB[playerName] = note
-    end
-    
-    QDKP2_Debug(2, "Notes", "Кеш заметок сохранен. Записей: " .. tostring(self:CountNotes()))
-end
-
--- ПОДСЧЕТ ЗАМЕТОК В КЭШЕ
-function myClass.CountNotes(self)
-    local count = 0
-    if self.officerNoteCache then
-        for _ in pairs(self.officerNoteCache) do
-            count = count + 1
-        end
-    end
-    return count
 end
 
 -- Форматирование строки последнего онлайна
@@ -544,7 +464,7 @@ end
 
 function myClass.Show(self)
     SetGuildRosterShowOffline(true)
-	QDKP2_Toggle(2, true)
+    QDKP2_Toggle(2, true)
     QDKP2GUI_Roster:Refresh()
 end
 
@@ -669,9 +589,9 @@ function myClass.Refresh(self, forceResort)
         myClass:ShowColumn('roll', false)
         myClass:ShowColumn('bid', false)
         myClass:ShowColumn('value', false)
-        myClass:ShowColumn('officer', true)
+        myClass:ShowColumn('public', true)
         myClass:ShowColumn('role', true)
-		myClass:ShowColumn('lastonline', true)
+        myClass:ShowColumn('lastonline', true)
         QDKP2_Frame2_sesscount:Hide()
         QDKP2_Frame2_SessionZone:Hide()
         QDKP2_Frame2_bidcount:Hide()
@@ -691,9 +611,9 @@ function myClass.Refresh(self, forceResort)
         myClass:ShowColumn('roll', false)
         myClass:ShowColumn('bid', false)
         myClass:ShowColumn('value', false)
-        myClass:ShowColumn('officer', true)
+        myClass:ShowColumn('public', true)
         myClass:ShowColumn('role', true)
-		myClass:ShowColumn('lastonline', false)
+        myClass:ShowColumn('lastonline', false)
         QDKP2_Frame2_sesscount:Show()
         QDKP2_Frame2_SessionZone:Show()
         QDKP2_Frame2_bidcount:Hide()
@@ -709,9 +629,9 @@ function myClass.Refresh(self, forceResort)
         myClass:ShowColumn('roll', true)
         myClass:ShowColumn('bid', true)
         myClass:ShowColumn('value', true)
-        myClass:ShowColumn('officer', true)
+        myClass:ShowColumn('public', true)
         myClass:ShowColumn('role', true)
-		myClass:ShowColumn('lastonline', false)
+        myClass:ShowColumn('lastonline', false)
         QDKP2_Frame2_sesscount:Show()
         QDKP2_Frame2_SessionZone:Show()
         QDKP2_Frame2_bidcount:Show()
@@ -832,7 +752,7 @@ function myClass.Refresh(self, forceResort)
                 classColor = QDKP2_GetClassColor(class)
             end
             getglobal(ParentName .. "_class"):SetVertexColor(classColor.r, classColor.g, classColor.b, a)
-            getglobal(ParentName .. "_officer"):SetVertexColor(r, g, b, a)
+            getglobal(ParentName .. "_public"):SetVertexColor(r, g, b, a)
             if isinguild and QDKP2_GetNet(name) < 0 then
                 getglobal(ParentName .. "_net"):SetVertexColor(1, 0.2, 0.2)
             else
@@ -844,7 +764,7 @@ function myClass.Refresh(self, forceResort)
             getglobal(ParentName .. "_deltatotal"):SetVertexColor(r, g, b, a)
             getglobal(ParentName .. "_deltaspent"):SetVertexColor(r, g, b, a)
 
-            local nameS, roll, bid, value, rank, officerNote, net, total, spent, hours, s_gain, s_spent
+            local nameS, roll, bid, value, rank, publicNote, net, total, spent, hours, s_gain, s_spent
             nameS = QDKP2_GetName(name) or 'Unknown'
             if self.Sel == 'bid' then
                 local BidEntry = QDKP2_BidM_GetBidder(name) or {}
@@ -856,30 +776,31 @@ function myClass.Refresh(self, forceResort)
                 bid = '';
                 value = ''
             end
-			-- Last Online
-			if self.Sel == "guild" then
-				local lastOnlineText = QDKP2_lastonline_text[name] or ""
-				getglobal(ParentName .. "_lastonline"):SetText(lastOnlineText)
+            -- Last Online
+            if self.Sel == "guild" then
+                local lastOnlineText = QDKP2_lastonline_text[name] or ""
+                getglobal(ParentName .. "_lastonline"):SetText(lastOnlineText)
 
-				-- Определяем цвет
-				local rCol, gCol, bCol
-				if QDKP2online and QDKP2online[name] then
-					rCol, gCol, bCol = 1, 1, 1          -- белый для онлайн
-				else
-					local minutes = QDKP2_lastonline_minutes[name] or 0
-					if minutes > 7 * 24 * 60 then
-						rCol, gCol, bCol = 1, 0.2, 0.2   -- красный для отсутствия >7 дней
-					else
-						rCol, gCol, bCol = 0.5, 0.5, 0.5 -- серый для оффлайн (менее 7 дней)
-					end
-				end
-				getglobal(ParentName .. "_lastonline"):SetVertexColor(rCol, gCol, bCol, a)
-			else
-				getglobal(ParentName .. "_lastonline"):SetText("")
-			end
+                -- Определяем цвет
+                local rCol, gCol, bCol
+                if QDKP2online and QDKP2online[name] then
+                    rCol, gCol, bCol = 1, 1, 1          -- белый для онлайн
+                else
+                    local minutes = QDKP2_lastonline_minutes[name] or 0
+                    if minutes > 7 * 24 * 60 then
+                        rCol, gCol, bCol = 1, 0.2, 0.2   -- красный для отсутствия >7 дней
+                    else
+                        rCol, gCol, bCol = 0.5, 0.5, 0.5 -- серый для оффлайн (менее 7 дней)
+                    end
+                end
+                getglobal(ParentName .. "_lastonline"):SetVertexColor(rCol, gCol, bCol, a)
+            else
+                getglobal(ParentName .. "_lastonline"):SetText("")
+            end
             rank = QDKP2rank[name]
             
-            officerNote = self.officerNoteCache[name] or ''
+            -- Получаем публичную заметку из кэша
+            publicNote = self.publicNoteCache[name] or ''
             
             if class == "Death Knight" then
                 class = "DK";
@@ -913,7 +834,7 @@ function myClass.Refresh(self, forceResort)
             getglobal(ParentName .. "_value"):SetText(tostring(value or '-'))
             getglobal(ParentName .. "_rank"):SetText(tostring(rank or '-'));
             getglobal(ParentName .. "_class"):SetText(tostring(class or '-'));
-            getglobal(ParentName .. "_officer"):SetText(tostring(officerNote));
+            getglobal(ParentName .. "_public"):SetText(tostring(publicNote));
             getglobal(ParentName .. "_role"):SetText(tostring(roleDisplay));
             getglobal(ParentName .. "_net"):SetText(tostring(net or '-') .. DKP_Ast);
             getglobal(ParentName .. "_total"):SetText(tostring(total or '-') .. DKP_Ast);
@@ -940,9 +861,9 @@ function myClass.Refresh(self, forceResort)
     FauxScrollFrame_Update(QDKP2_frame2_scrollbar, #self.List, numEntries, 16);
 end
 
-function myClass.GetOfficerNote(self, name)
+function myClass.GetPublicNote(self, name)
     if not name then return "" end
-    return self.officerNoteCache[name] or ""
+    return self.publicNoteCache[name] or ""
 end
 
 function myClass.Update(self)
@@ -1078,13 +999,10 @@ function myClass.ShowColumn(self, Column, todo)
         end
     end
     
-    if Column == "officer" and self.NotesButton then
-        if todo then
-            self.NotesButton:Show()
-        else
-            self.NotesButton:Hide()
-        end
+    if Column == "public" then
+        -- Кнопка "Up" удалена, ничего не делаем
     end
+    
     for i = 1, QDKP2GUI_Roster.ENTRIES do
         local ParentName = "QDKP2_frame2_entry" .. tostring(i)
         local ColObj = getglobal(ParentName .. '_' .. Column)
@@ -1161,7 +1079,11 @@ function myClass.LeftClickEntry(self)
                 QDKP2GUI_Log:ShowPlayer(myClass.SelectedPlayers[1])
             end
         else
+            -- Обычный клик: выделяем игрока и, если он в гильдии, открываем диалог редактирования
             self:SelectPlayer(name)
+            if QDKP2_IsInGuild(name) then
+                QDKP2GUI_EditDialog:Show(name)
+            end
         end
         myClass.LastClickIndex = btnIndex
     end
@@ -1334,6 +1256,12 @@ end
 
 --------------------- Menus --------------------------
 
+-- (остальной код меню и сортировки без изменений, он длинный, но его оставляем)
+-- Здесь должен быть весь код меню (QuickModifyVoices, LogVoices, PlayerMenu, RosterMenu, сортировка и т.д.)
+-- В целях экономии места я не копирую его полностью, но он остаётся неизменным.
+-- В финальном файле он должен быть.
+
+-- (ниже идёт исходный код меню, который не менялся)
 local function NYIfunc()
     QDKP2_Msg("To be done")
 end
@@ -1689,7 +1617,7 @@ local LogVoices = {
                       QDKP2_RefreshAll()
                   end
                 },
-				{ text = "|cFFFF0000Савиана", notClickable = true },
+                { text = "|cFFFF0000Савиана", notClickable = true },
                 { text = "Не вынес метку (-300)",
                   func = function()
                       QDKP2_PlayerSpends(myClass.SelectedPlayers, 300, "Не вынос Метки")
@@ -1697,36 +1625,36 @@ local LogVoices = {
                       QDKP2_RefreshAll()
                   end
                 },
-				{ text = "|cFFFF0000Халион", notClickable = true },
+                { text = "|cFFFF0000Халион", notClickable = true },
                 { text = "Смерть от падения Метеора (-1000)",
                   func = function()
                       QDKP2_PlayerSpends(myClass.SelectedPlayers, 1000, "Смерть от падения Метеора")
                       QDKP2GUI_CloseMenus()
                       QDKP2_RefreshAll()
                   end
-                },				
-				{ text = "Смерть в огне Метеора (-500)",
+                },                
+                { text = "Смерть в огне Метеора (-500)",
                   func = function()
                       QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Смерть в огне Метеора")
                       QDKP2GUI_CloseMenus()
                       QDKP2_RefreshAll()
                   end
                 },
-				{ text = "Смерть от Лезвий (-500)",
+                { text = "Смерть от Лезвий (-500)",
                   func = function()
                       QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Смерть от Лезвий")
                       QDKP2GUI_CloseMenus()
                       QDKP2_RefreshAll()
                   end
                 },
-				{ text = "Не вынес Метку (-500)",
+                { text = "Не вынес Метку (-500)",
                   func = function()
                       QDKP2_PlayerSpends(myClass.SelectedPlayers, 500, "Не вынос Метки")
                       QDKP2GUI_CloseMenus()
                       QDKP2_RefreshAll()
                   end
                 },
-				{ text = "Не кидает Фридом (-300)",
+                { text = "Не кидает Фридом (-300)",
                   func = function()
                       QDKP2_PlayerSpends(myClass.SelectedPlayers, 300, "Не кинутый Фридом")
                       QDKP2GUI_CloseMenus()
@@ -2303,15 +2231,15 @@ local function SortComparitor(val1, val2)
         compare = compare + increment;
     end
 
-    -- Officer Note
-    test1 = myClass:GetOfficerNote(val1) or ""
-    test2 = myClass:GetOfficerNote(val2) or ""
-    if Reverse.Officer then
+    -- Public Note (публичная заметка)
+    test1 = myClass:GetPublicNote(val1) or ""
+    test2 = myClass:GetPublicNote(val2) or ""
+    if Reverse.Public then
         invertBuffer = test2;
         test2 = test1;
         test1 = invertBuffer;
     end
-    increment = Values.Officer
+    increment = Values.Public
     if (test1 < test2) then
         compare = compare - increment;
     elseif (test1 > test2) then
@@ -2352,23 +2280,23 @@ local function SortComparitor(val1, val2)
         compare = compare + increment;
     end
 
-	-- Last Online
-	local minutes1 = QDKP2_lastonline_minutes[val1]
-	local minutes2 = QDKP2_lastonline_minutes[val2]
+    -- Last Online
+    local minutes1 = QDKP2_lastonline_minutes[val1]
+    local minutes2 = QDKP2_lastonline_minutes[val2]
 
-	-- Нет данных → в конец (используем очень большое число)
-	if minutes1 == nil then minutes1 = math.huge end
-	if minutes2 == nil then minutes2 = math.huge end
+    -- Нет данных → в конец (используем очень большое число)
+    if minutes1 == nil then minutes1 = math.huge end
+    if minutes2 == nil then minutes2 = math.huge end
 
-	if Reverse.LastOnline then
-		minutes1, minutes2 = minutes2, minutes1
-	end
-	increment = Values.LastOnline
-	if minutes1 < minutes2 then
-		compare = compare - increment
-	elseif minutes1 > minutes2 then
-		compare = compare + increment
-	end
+    if Reverse.LastOnline then
+        minutes1, minutes2 = minutes2, minutes1
+    end
+    increment = Values.LastOnline
+    if minutes1 < minutes2 then
+        compare = compare - increment
+    elseif minutes1 > minutes2 then
+        compare = compare + increment
+    end
 
     -- Net
     test1 = QDKP2_GetNet(val1) or QDKP2_MINIMUM_NET
@@ -2545,12 +2473,12 @@ function myClass.SortList(self, Order, List, forceResort)
         lastmax = Values.Rank
     elseif (Order == "Class") then
         lastmax = Values.Class
-    elseif (Order == "Officer") then
-        lastmax = Values.Officer
+    elseif (Order == "Public") then
+        lastmax = Values.Public
     elseif (Order == "Role") then
         lastmax = Values.Role
-	elseif (Order == "LastOnline") then
-		lastmax = Values.LastOnline	
+    elseif (Order == "LastOnline") then
+        lastmax = Values.LastOnline    
     elseif (Order == "Net") then
         lastmax = Values.Net
     elseif (Order == "Total") then
@@ -2582,15 +2510,15 @@ function myClass.SortList(self, Order, List, forceResort)
     if (Values.Class > lastmax) then
         Values.Class = Values.Class / 2;
     end
-    if (Values.Officer > lastmax) then
-        Values.Officer = Values.Officer / 2;
+    if (Values.Public > lastmax) then
+        Values.Public = Values.Public / 2;
     end
     if (Values.Role > lastmax) then
         Values.Role = Values.Role / 2;
     end
     if (Values.LastOnline > lastmax) then
         Values.LastOnline = Values.LastOnline / 2;
-    end	
+    end    
     if (Values.Net > lastmax) then
         Values.Net = Values.Net / 2;
     end
@@ -2624,12 +2552,12 @@ function myClass.SortList(self, Order, List, forceResort)
         Values.Rank = 2048
     elseif (Order == "Class") then
         Values.Class = 2048
-    elseif (Order == "Officer") then
-        Values.Officer = 2048
+    elseif (Order == "Public") then
+        Values.Public = 2048
     elseif (Order == "Role") then
         Values.Role = 2048
-	elseif (Order == "LastOnline") then
-		Values.LastOnline = 2048	
+    elseif (Order == "LastOnline") then
+        Values.LastOnline = 2048    
     elseif (Order == "Net") then
         Values.Net = 2048
     elseif (Order == "Total") then

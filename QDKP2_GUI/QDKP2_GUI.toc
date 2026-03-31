@@ -1,7 +1,7 @@
 ## Interface: 30300
 ## Title: Quick DKP V2 - GUI
 ## Author: Edited by CoolSnesh
-## Version: 2026v1.2
+## Version: 2026v1.3
 ## Notes: Графический интерфейс QDKP (Необходим основной аддон)
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
@@ -21,3 +21,6 @@ Code\Init.lua
 Code\LogEntryMod.lua
 
 QDKP2_GUI.xml
+
+EditDialog.xml
+EditDialog.lua

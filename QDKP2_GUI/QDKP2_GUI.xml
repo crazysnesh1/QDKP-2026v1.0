@@ -1367,9 +1367,9 @@
 				</FontString>
 
 				<!-- СТОЛБЕЦ ГИЛЬДЕЙСКИХ ЗАМЕТОК -->
-				<FontString name="$parent_officer" inherits="GameFontHighlightSmall" justifyH="CENTER" text="">
+				<FontString name="$parent_public" inherits="GameFontHighlightSmall" justifyH="CENTER" text="">
 					<Size>
-						<AbsDimension x="140" y="14"/>
+						<AbsDimension x="165" y="14"/>
 					</Size>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="$parent_class" relativePoint="TOPRIGHT"/>
@@ -1382,7 +1382,7 @@
 						<AbsDimension x="70" y="14"/>
 					</Size>
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parent_officer" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPLEFT" relativeTo="$parent_public" relativePoint="TOPRIGHT"/>
 					</Anchors>
 				</FontString>
 
@@ -1442,7 +1442,7 @@
 				<!-- НОВЫЙ СТОЛБЕЦ ПОСЛЕДНЕГО ОНЛАЙНА -->
 				<FontString name="$parent_lastonline" inherits="GameFontHighlightSmall" justifyH="CENTER" text="">
 					<Size>
-						<AbsDimension x="115" y="14"/>
+						<AbsDimension x="90" y="14"/>
 					</Size>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="$parent_deltaspent" relativePoint="TOPRIGHT"/>
@@ -1993,18 +1993,20 @@
                     <OnClick>QDKP2GUI_Roster:SortBy("Class")</OnClick>
                 </Scripts>
             </Button>
-            <!-- НОВАЯ КНОПКА СОРТИРОВКИ ДЛЯ ЗАМЕТОК -->
-			<Button name="$parent_SortBtn_officer" inherits="UIPanelButtonTemplate" text="Заметки">
+            <!-- КНОПКА СОРТИРОВКИ ДЛЯ ЗАМЕТОК -->
+			<Button name="$parent_SortBtn_public" inherits="UIPanelButtonTemplate" text="Заметки">
 				<Size>
-					<AbsDimension x="97" y="25"/> </Size>
+					<AbsDimension x="97" y="25"/>
+				</Size>
 				<Anchors>
-					<Anchor relativePoint="LEFT" point="LEFT" relativeTo="QDKP2_frame2_title_officer"/>
-					</Anchors>
+					<Anchor relativePoint="LEFT" point="LEFT" relativeTo="QDKP2_frame2_title_public"/>
+					<Anchor relativePoint="RIGHT" point="RIGHT" relativeTo="QDKP2_frame2_title_public"/>
+				</Anchors>
 				<Scripts>
-					<OnClick>QDKP2GUI_Roster:SortBy("Officer")</OnClick>
+					<OnClick>QDKP2GUI_Roster:SortBy("Public")</OnClick>
 				</Scripts>
 			</Button>
-			<!-- НОВАЯ КНОПКА СОРТИРОВКИ ДЛЯ РОЛЕЙ -->
+			<!-- КНОПКА СОРТИРОВКИ ДЛЯ РОЛЕЙ -->
 			<Button name="$parent_SortBtn_role" inherits="UIPanelButtonTemplate" text="Роль">
 				<Size>
 					<AbsDimension x="35" y="25"/> </Size>

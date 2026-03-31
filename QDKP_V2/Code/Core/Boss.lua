@@ -22,6 +22,24 @@ boss_translator["Халион, Сумеречный Разрушитель"] = "
 boss_translator["Халион"] = "Halion"
 boss_translator["Эйдис Погибель Тьмы"] = "Eydis Darkbane"
 boss_translator["Эйдис, Погибель Тьмы"] = "Eydis Darkbane"
+boss_translator["Огненный Левиафан"] = "Flame Leviathan"
+boss_translator["Flame Leviathan"] = "Flame Leviathan"
+boss_translator["Разрушитель XT-002"] = "XT-002 Deconstructor"
+boss_translator["XT-002 Deconstructor"] = "XT-002 Deconstructor"
+boss_translator["Железное Собрание"] = "The Assembly of Iron"
+boss_translator["The Assembly of Iron"] = "The Assembly of Iron"
+boss_translator["Ходир"] = "Hodir"
+boss_translator["Hodir"] = "Hodir"
+boss_translator["Торим"] = "Thorim"
+boss_translator["Thorim"] = "Thorim"
+boss_translator["Фрейя"] = "Freya"
+boss_translator["Freya"] = "Freya"
+boss_translator["Мимирон"] = "Mimiron"
+boss_translator["Mimiron"] = "Mimiron"
+boss_translator["Генерал Везакс"] = "General Vezax"
+boss_translator["General Vezax"] = "General Vezax"
+boss_translator["Йогг-Сарон"] = "Yogg-Saron"
+boss_translator["Yogg-Saron"] = "Yogg-Saron"
 --boss_translator["Боевой корабль"] = "Icecrown Gunship Battle"
 --boss_translator["Бой на кораблях"] = "Icecrown Gunship Battle"
 --boss_translator["Gunship Battle"] = "Icecrown Gunship Battle"
@@ -38,6 +56,7 @@ boss_translator["Эйдис, Погибель Тьмы"] = "Eydis Darkbane"
 --boss_translator["Кровавый Совет"] = "Blood Prince Council"
 --boss_translator["Совет Принцев Крови"] = "Blood Prince Council"
 
+
 local specialBossHandlers = {
     -- ЦЛК
     ["Icecrown Gunship Battle"] = function()
@@ -50,43 +69,52 @@ local specialBossHandlers = {
     end
 }
 
--- Глобальные переменные для отслеживания состояний
+QDKP2_UlduarHM_Flags = {
+    ["Flame Leviathan"] = false,
+    ["XT-002 Deconstructor"] = false,
+    ["The Assembly of Iron"] = false,
+    ["Hodir"] = false,
+    ["Thorim"] = false,
+    ["Freya"] = false,
+    ["Mimiron"] = false,
+    ["General Vezax"] = false,
+    ["Yogg-Saron"] = false,
+}
+
+AssemblyDeaths = { 
+    ["Steelbreaker"] = false, 
+    ["Runemaster Molgeim"] = false, 
+    ["Stormcaller Brundir"] = false 
+}
+
+QDKP2_HodirStartTime = 0
 QDKP2_ShipBattleCompleted = false
 QDKP2_ValithriaHealed = false
+QDKP2_FreyaHMTime = 0
 
+-- Регистрация DBM для Халиона
 local QDKP2_DBMHalionHookRegistered = false
-
 local function QDKP2_DBMKillCallback(event, mod)
-    if event ~= "DBM_Kill" then return end
-    if not mod then return end
-
+    if event ~= "DBM_Kill" or not mod then return end
     local modId = string.lower(tostring(mod.id or ""))
-    local modName = ""
-    if mod.localization and mod.localization.general and mod.localization.general.name then
-        modName = string.lower(tostring(mod.localization.general.name or ""))
-    end
+    local modName = string.lower(tostring(mod.localization and mod.localization.general and mod.localization.general.name or ""))
 
-    if modId == "halion" or
-       modName == "halion" or
-       modName == "халион" or
-       modName == "halion, the twilight destroyer" or
-       modName == "халион, сумеречный разрушитель" then
+    if modId == "halion" or string.find(modName, "халион") or string.find(modName, "halion") then
         QDKP2_BossKilled("Halion")
     end
 end
 
 local function QDKP2_RegisterDBMHalionHook()
     if QDKP2_DBMHalionHookRegistered then return end
-    if not (DBM and DBM.RegisterCallback) then return end
-
-    DBM:RegisterCallback("DBM_Kill", QDKP2_DBMKillCallback)
-    QDKP2_DBMHalionHookRegistered = true
+    if DBM and DBM.RegisterCallback then
+        DBM:RegisterCallback("DBM_Kill", QDKP2_DBMKillCallback)
+        QDKP2_DBMHalionHookRegistered = true
+    end
 end
 
-if DBM and DBM.RegisterOnLoadCallback then
-    DBM:RegisterOnLoadCallback(QDKP2_RegisterDBMHalionHook)
-elseif DBM and DBM.RegisterCallback then
-    QDKP2_RegisterDBMHalionHook()
+if DBM then
+    if DBM.RegisterOnLoadCallback then DBM:RegisterOnLoadCallback(QDKP2_RegisterDBMHalionHook)
+    elseif DBM.RegisterCallback then QDKP2_RegisterDBMHalionHook() end
 end
 
 function QDKP2_CheckSpecialBoss(boss)
@@ -151,17 +179,44 @@ function QDKP2_BossKilled(boss)
 end
 
 function QDKP2_GetBossAward(boss, zone)
-    if not boss or type(boss) ~= 'string' then
-        QDKP2_Debug(1, "Core", "Calling QDKP2_BossKilled with invalid boss: " .. tostring(boss))
-        return
-    end
+    if not boss or type(boss) ~= 'string' then return end
 
-    local award
-    local DKPType = "DKP_" .. QDKP2_GetInstanceDifficulty()
+    local diff = QDKP2_GetInstanceDifficulty() 
+    local DKPType = "DKP_" .. diff
+    
     zone = zone or GetRealZoneText()
     local zoneEng = QDKP2zoneEnglish[zone] or zone
     zone = string.lower(zone)
     zoneEng = string.lower(zoneEng)
+
+    if zone == "ульдуар" or zoneEng == "ulduar" then
+        local isHardMode = false
+        local checkBoss = boss_translator[boss] or boss -- используем внутреннее имя
+
+        -- Проверка Ходира
+        if (checkBoss == "Hodir") and QDKP2_HodirStartTime > 0 then
+            if (GetTime() - QDKP2_HodirStartTime) <= 180 then
+                isHardMode = true
+            end
+        end
+
+        -- Безопасная проверка флагов по конкретному имени
+        if QDKP2_UlduarHM_Flags[checkBoss] then
+            isHardMode = true
+        end
+
+        if isHardMode then
+            -- Переключаем типы: 1->3 (10H), 2->4 (25H) или по строкам N->H
+            if DKPType == "DKP_1" then DKPType = "DKP_3"
+            elseif DKPType == "DKP_2" then DKPType = "DKP_4"
+            elseif string.match(DKPType, "10N") then DKPType = "DKP_10H"
+            elseif string.match(DKPType, "25N") then DKPType = "DKP_25H"
+            end
+            QDKP2_Debug(2, "Core", "Ульдуар: Обнаружен ХАРДМОД для " .. boss)
+        end
+    end
+
+    local award
 
     -- поиск конкретной награды за босса
     award = QDKP2_IsInBossTable(boss, DKPType)
@@ -219,99 +274,218 @@ function QDKP2_ForceBossKill(bossName)
     QDKP2_BossKilled(bossName)
 end
 
--- Обработчик событий
+-- 1. Таблица флагов и отладка
+QDKP2_UlduarHM_Flags = QDKP2_UlduarHM_Flags or {}
+
+local function UlduarDebug(msg)
+    DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[QDKP2 Ulduar]:|r " .. msg)
+end
+
+-------------------------------------------------------
+-- ГЛАВНЫЙ ОБРАБОТЧИК СОБЫТИЙ (Триггеры боссов)
+-------------------------------------------------------
+
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("CHAT_MSG_MONSTER_YELL")
 eventFrame:RegisterEvent("ENCOUNTER_END")
+eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
 eventFrame:SetScript("OnEvent", function(self, event, ...)
+    -- 1. НАЧАЛО БОЯ
+    if event == "PLAYER_REGEN_DISABLED" then
+        -- Сброс флагов с защитой Мимирона и Фрейи
+        for k in pairs(QDKP2_UlduarHM_Flags) do 
+            if k == "Mimiron" and (GetTime() - (QDKP2_MimironButtonTime or 0)) < 180 then
+                -- Флаг Мимирона не трогаем
+            elseif k == "Freya" and (GetTime() - (QDKP2_FreyaHMTime or 0)) < 180 then
+                -- Флаг Фрейи не трогаем
+            else
+                QDKP2_UlduarHM_Flags[k] = false 
+            end
+        end
+        for k in pairs(AssemblyDeaths) do AssemblyDeaths[k] = false end
+        QDKP2_HodirStartTime = GetTime()
+        
+        -- Проверка локации Йогг-Сарона
+        local subzone = GetMinimapZoneText()
+        if subzone == "Темница Йогг-Сарона" or subzone == "The Prison of Yogg-Saron" then
+            -- Запускаем проверку через 3 секунды после начала боя, чтобы баффы успели прогрузиться
+            C_Timer.After(3, function()
+                local hasKeeper = false
+                local keepers = {
+                    [62671] = true, -- Скорость изобретения
+                    [62702] = true, -- Гнев бури
+                    [62670] = true, -- Устойчивость природы
+                    [62650] = true  -- Стойкость льдов
+                }
+
+                for i = 1, 40 do
+                    local name = UnitBuff("player", i)
+                    if not name then break end
+                    for id in pairs(keepers) do
+                        if name == GetSpellInfo(id) then
+                            hasKeeper = true
+                            break
+                        end
+                    end
+                    if hasKeeper then break end
+                end
+                
+                if not hasKeeper then
+                    QDKP2_UlduarHM_Flags["Yogg-Saron"] = true
+                    UlduarDebug("Йогг-Сарон: ХМ (0 света) определен.")
+                else
+                    QDKP2_UlduarHM_Flags["Yogg-Saron"] = false
+                    UlduarDebug("Йогг-Сарон: ОБЫЧКА (есть помощь хранителей).")
+                end
+            end)
+        end
+    end
+
+-- 2. ЛОГ БОЯ
+    if event == "COMBAT_LOG_EVENT_UNFILTERED" then
+        local _, logType, _, _, _, _, destName, _, spellId = ...
+
+        -- Левиафан (Твои ID: 65077, 65075, 65076, 64482)
+        if spellId == 65077 or spellId == 65075 or spellId == 65076 or spellId == 64482 then
+            if not QDKP2_UlduarHM_Flags["Flame Leviathan"] then
+                QDKP2_UlduarHM_Flags["Flame Leviathan"] = true
+                UlduarDebug("Огненный Левиафан: ХМ определен по ID " .. spellId)
+            end
+        end
+
+        -- XT-002 (Твой ID: 64193 - бафф Heartbreak на боссе)
+        if spellId == 64193 and (logType == "SPELL_AURA_APPLIED" or logType == "SPELL_CAST_SUCCESS") then
+            if not QDKP2_UlduarHM_Flags["XT-002 Deconstructor"] then
+                QDKP2_UlduarHM_Flags["XT-002 Deconstructor"] = true
+                UlduarDebug("XT-002: ХМ определен (Сердце разбито)")
+            end
+        end
+
+		-- Железное Собрание: Отслеживание смертей
+        if logType == "UNIT_DIED" then
+            if destName == "Сталелом" or destName == "Steelbreaker" then 
+                AssemblyDeaths["Steelbreaker"] = true
+            elseif destName == "Мастер рун Молгейм" or destName == "Runemaster Molgeim" then 
+                AssemblyDeaths["Runemaster Molgeim"] = true
+            elseif destName == "Буревестник Брундир" or destName == "Stormcaller Brundir" then 
+                AssemblyDeaths["Stormcaller Brundir"] = true 
+            end
+
+            -- Проверяем, умерли ли все трое
+            if AssemblyDeaths["Steelbreaker"] and AssemblyDeaths["Runemaster Molgeim"] and AssemblyDeaths["Stormcaller Brundir"] then
+                -- Условие ХМ: Сталелом должен быть последним (текущим destName)
+                if destName == "Сталелом" or destName == "Steelbreaker" then
+                    QDKP2_UlduarHM_Flags["The Assembly of Iron"] = true
+                    UlduarDebug("Железное Собрание: ХМ (Сталелом убит последним)")
+                else
+                    QDKP2_UlduarHM_Flags["The Assembly of Iron"] = false
+                    UlduarDebug("Железное Собрание: ОБЫЧКА (последним убит " .. (destName or "неизвестно") .. ")")
+                end
+                
+                QDKP2_BossKilled("The Assembly of Iron")
+                -- Сброс, чтобы не сработало дважды за бой
+                for k in pairs(AssemblyDeaths) do AssemblyDeaths[k] = false end
+            end
+        end
+				
+        -- Фрейя (Сущности)
+        if spellId == 65761 or spellId == 65590 or spellId == 65586 then
+            QDKP2_FreyaHMTime = GetTime() -- Засекаем время прока ХМ
+            if not QDKP2_UlduarHM_Flags["Freya"] then
+                QDKP2_UlduarHM_Flags["Freya"] = true
+                UlduarDebug("Фрейя: ХМ определен.")
+            end
+        end
+
+        -- Везакс (Саронитовый враг)
+        if destName == "Саронитовый враг" or destName == "Saronite Animus" then
+            if not QDKP2_UlduarHM_Flags["General Vezax"] then
+                QDKP2_UlduarHM_Flags["General Vezax"] = true
+                UlduarDebug("Везакс: Появился Саронитовый враг. ХМ активирован.")
+            end
+        end
+    end
+
+-- 3. КРИКИ МОНСТРОВ
     if event == "CHAT_MSG_MONSTER_YELL" then
         local msg, sender = ...
+        if not msg then return end
+
+		-- ТОРИМ (Крик Сиф)
+        if string.find(msg, "Это невозможно! Торим, не сомневайся") or string.find(msg, "It is impossible") then
+            QDKP2_UlduarHM_Flags["Thorim"] = true
+            UlduarDebug("Торим: ХМ активирован (Сиф вступила в бой).")
+        end
+		
+        -- Мимирон (Красная кнопка)
+        if string.find(msg, "НЕ НАЖИМАЙТЕ ЭТУ КНОПКУ!") or string.find(msg, "DO NOT PUSH THIS BUTTON!") then
+            QDKP2_UlduarHM_Flags["Mimiron"] = true
+            UlduarDebug("Мимирон: ХМ активирован.")
+        end
+
+        -- Ходир (Таймер)
+        if msg == "Вы будете наказаны за это вторжение!" or msg == "You will suffer for this trespass!" then
+            QDKP2_HodirStartTime = GetTime()
+        end
+
+        -- Корабли
+        if (msg == "Ну не говорите потом, что я не предупреждал. Вперед, братья и сестры!" and sender == "Мурадин Бронзобород") or
+           (msg == "Альянс повержен. Вперед, к Королю-личу!" and sender == "Верховный правитель Саурфанг") then
+            QDKP2_ShipBattleCompleted = true
+            QDKP2_BossKilled("Icecrown Gunship Battle")
+        end
         
-        -- Бой на кораблях - ТОЛЬКО ТОЧНАЯ ФРАЗА
-		if (msg == "Ну не говорите потом, что я не предупреждал. Вперед, братья и сестры!" and sender == "Мурадин Бронзобород") or
-		   (msg == "Альянс повержен. Вперед, к Королю-личу!" and sender == "Верховный правитель Саурфанг") then
-			QDKP2_ShipBattleCompleted = true
-			QDKP2_Debug(2, "Core", "Бой на кораблях завершен! Вызываем награду.")
-			QDKP2_BossKilled("Бой на Кораблях")
-		end
-        
-        -- Валитрия Сноходица - ТОЛЬКО ТОЧНАЯ ФРАЗА
+		-- Валитрия
         if msg == "Я ИЗЛЕЧИЛАСЬ! Изера, даруй мне силу покончить с этими нечестивыми тварями." and 
            (sender == "Валитрия Сноходица" or sender == "Valithria Dreamwalker") then
             QDKP2_ValithriaHealed = true
-            QDKP2_Debug(2, "Core", "Валитрия исцелена! Вызываем награду.")
-            QDKP2_BossKilled("Валитрия Сноходица")
+            QDKP2_BossKilled("Valithria Dreamwalker")
         end
         
-        -- Чудовища Нордскола - ИВК - ТОЛЬКО ТОЧНАЯ ФРАЗА
+		-- Чудовища Нордскола
         if msg == "Все чудовища повержены!" and 
            (sender == "Верховный лорд Тирион Фордринг" or sender == "Highlord Tirion Fordring") then
-            QDKP2_Debug(2, "Core", "Чудовища повержены! Вызываем награду.")
-            QDKP2_BossKilled("Чудовища Нордскола")
+            QDKP2_BossKilled("Northrend Beasts")
         end
 
-        -- Чемпионы Фракций - ИВК - ТОЛЬКО ТОЧНАЯ ФРАЗА
+		-- Чемпионы фракций
         if msg == "Пустая и горькая победа. После сегодняшних потерь мы стали слабее как целое. Кто еще, кроме Короля-лича, выиграет от подобной глупости? Пали великие воины. И ради чего? Истинная опасность еще впереди – нас ждет битва с Королем-личом." and 
            (sender == "Верховный лорд Тирион Фордринг" or sender == "Highlord Tirion Fordring") then
-            QDKP2_Debug(2, "Core", "Чемпионы повержены! Вызываем награду.")
-            QDKP2_BossKilled("Чемпионы фракций")
+            QDKP2_BossKilled("Faction Champions")
         end
-		
---        -- Валь'киры-близнецы - ИВК - ТОЛЬКО ТОЧНАЯ ФРАЗА
---        if msg == "Плеть не остановить..." and 
---           (sender == "Эйдис Погибель Тьмы" or sender == "Eydis Darkbane") then
---            QDKP2_Debug(2, "Core", "Валь'киры повержены! Вызываем награду.")
---            QDKP2_BossKilled("Валь'киры-близнецы")
---       end
---        -- Валь'киры-близнецы - ИВК - ТОЛЬКО ТОЧНАЯ ФРАЗА
---        if msg == "Король-лич понес тяжелую потерю! Вы проявили себя как бесстрашные герои Серебряного Авангарда! Мы вместе нанесем удар по Цитадели Ледяной Короны и разнесем в клочья остатки Плети! Нет такого испытания, которое мы бы не могли пройти сообща!" and 
---           (sender == "Верховный лорд Тирион Фордринг" or sender == "Highlord Tirion Fordring") then
---            QDKP2_Debug(2, "Core", "Валь'киры повержены! Вызываем награду.")
---            QDKP2_BossKilled("Валь'киры-близнецы")
---        end
-		
-        -- Железное Собрание - Ульдуар - ТОЛЬКО ТОЧНАЯ ФРАЗА
-        if msg == "Вы разгромили Железное Собрание и открыли Архив! Молодцы, ребятки!" and 
-           (sender == "Бранн Бронзобород" or sender == "Brann Bronzebeard") then
-            QDKP2_Debug(2, "Core", "Железное Собрание повержены! Вызываем награду.")
-            QDKP2_BossKilled("Железное собрание")
-        end
- 
-         -- Ходир - Ульдуар - ТОЛЬКО ТОЧНАЯ ФРАЗА
+        
+		-- Ходир
         if msg == "Наконец-то я... свободен от его оков..." and 
            (sender == "Ходир" or sender == "Hodir") then
-            QDKP2_Debug(2, "Core", "Ходир повержен! Вызываем награду.")
-            QDKP2_BossKilled("Ходир")
+            QDKP2_BossKilled("Hodir")
         end
-
-         -- Торим - Ульдуар - ТОЛЬКО ТОЧНАЯ ФРАЗА
+		
+		-- Торим
         if msg == "Придержите мечи! Я сдаюсь." and 
            (sender == "Торим" or sender == "Thorim") then
-            QDKP2_Debug(2, "Core", "Торим повержен! Вызываем награду.")
-            QDKP2_BossKilled("Торим")
+            QDKP2_BossKilled("Thorim")
         end
 
-         -- Фрейя - Ульдуар - ТОЛЬКО ТОЧНАЯ ФРАЗА
+		-- Фрея
         if msg == "Он больше не властен надо мной. Мой взор снова ясен. Благодарю вас, герои." and 
            (sender == "Фрейя" or sender == "Freya") then
-            QDKP2_Debug(2, "Core", "Фрейя повержена! Вызываем награду.")
-            QDKP2_BossKilled("Фрейя")
+            QDKP2_BossKilled("Freya")
         end
-		
-         -- Мимирон - Ульдуар - ТОЛЬКО ТОЧНАЯ ФРАЗА
+        
+		-- Мимирон
         if msg == "Очевидно, я совершил небольшую ошибку в расчетах. Пленный злодей затуманил мой разум и заставил меня отклониться от инструкций. Сейчас все системы в норме. Конец связи." and 
            (sender == "Мимирон" or sender == "Mimiron") then
-            QDKP2_Debug(2, "Core", "Мимирон повержен! Вызываем награду.")
-            QDKP2_BossKilled("Мимирон")
+            QDKP2_BossKilled("Mimiron")
         end
-		
-         -- Алгалон - Ульдуар - ТОЛЬКО ТОЧНАЯ ФРАЗА
+        
+		-- Алгалон
         if msg == "Я видел миры, охваченные пламенем Творцов. Их жители гибли, не успев издать ни звука. Я был свидетелем того, как галактики рождались и умирали в мгновение ока. И все время я оставался холодным... и безразличным. Я. Не чувствовал. Ничего. Триллионы загубленных судеб. Неужели все они были подобны вам? Неужели все они так же любили жизнь?" and 
            (sender == "Алгалон Наблюдатель" or sender == "Algalon the Observer") then
-            QDKP2_Debug(2, "Core", "Алгалон повержена! Вызываем награду.")
-            QDKP2_BossKilled("Алгалон Наблюдатель")
-        end		
+            QDKP2_BossKilled("Algalon the Observer")
+        end        
     end
 end)
 
@@ -335,13 +509,21 @@ end
 local original_BossKilled = QDKP2_BossKilled
 
 function QDKP2_BossKilled(boss)
+    -- Проверяем кулдаун прямо в обертке. Если с прошлого убийства прошло меньше 60 сек, 
+    -- блокируем выполнение, чтобы не выдать двойные роли.
+    if QDKP2_BossKilledTime and time() - QDKP2_BossKilledTime < 60 then
+        QDKP2_Debug(2, "Core", "Повторный вызов убийства босса. Блокируем двойное начисление ролей.")
+        return 
+    end
+
     -- Сохраняем текущее состояние авто-загрузки
     local wasUploading = QDKP2_SENDTRIG_RAIDAWARD
     
     -- Временно отключаем авто-загрузку для основного начисления
     QDKP2_SENDTRIG_RAIDAWARD = false
     
-    -- Вызываем оригинальную функцию начисления за босса
+    -- Вызываем оригинальную функцию начисления за босса.
+    -- (Она отработает и сама обновит таймер QDKP2_BossKilledTime = time())
     original_BossKilled(boss)
     
     -- Добавляем бонусы за роли после основной награды

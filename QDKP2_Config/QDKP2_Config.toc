@@ -1,7 +1,7 @@
 ## Interface: 30300
 ## Title: Quick DKP V2 - Config
 ## Author: Edited by CoolSnesh
-## Version: 2026v1.2
+## Version: 2026v1.3
 ## Notes: Настройка параметров внутри игры (Необходим основной аддон)
 ## DefaultState: Enabled
 ## LoadOnDemand: 0

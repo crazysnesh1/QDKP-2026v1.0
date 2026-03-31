@@ -1,0 +1,355 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
+
+    <Frame name="QDKP2_EditDialogFrame" parent="UIParent" enableMouse="true" movable="true" frameStrata="MEDIUM" hidden="true">
+        <Size>
+            <AbsDimension x="300" y="360"/>
+        </Size>
+        <Anchors>
+            <Anchor relativeTo="QDKP2_Frame2" point="TOPRIGHT" relativePoint="TOPRIGHT">
+                <Offset>
+                    <AbsDimension x="400" y="0"/>
+                </Offset>
+            </Anchor>
+        </Anchors>
+
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <BackgroundInsets>
+                <AbsInset left="11" right="12" top="12" bottom="11"/>
+            </BackgroundInsets>
+            <TileSize>
+                <AbsValue val="32"/>
+            </TileSize>
+            <EdgeSize>
+                <AbsValue val="32"/>
+            </EdgeSize>
+        </Backdrop>
+
+        <Layers>
+            <Layer level="ARTWORK">
+                <FontString name="QDKP2_EditDialogFrameTitle" inherits="GameFontNormal">
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="0" y="-15"/>
+                            </Offset>
+                        </Anchor>
+                        <Text>Редактирование игрока</Text>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="QDKP2_EditDialogFrameNameLabel" inherits="GameFontNormal" text="Имя:">
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="20" y="-50"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="QDKP2_EditDialogFrameNameValue" inherits="GameFontHighlight">
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="QDKP2_EditDialogFrameNameLabel" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="10" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="QDKP2_EditDialogFrameRankLabel" inherits="GameFontNormal" text="Ранг:">
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="20" y="-75"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="QDKP2_EditDialogFrameRankValue" inherits="GameFontHighlight">
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="QDKP2_EditDialogFrameRankLabel" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="16" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="QDKP2_EditDialogFramePublicNoteLabel" inherits="GameFontNormal" text="Публичная заметка:">
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="20" y="-105"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="QDKP2_EditDialogFrameOfficerNoteLabel" inherits="GameFontNormal" text="Офицерская заметка:">
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="20" y="-180"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+
+        <Frames>
+            <Button name="QDKP2_EditDialogFrameCloseButton" inherits="UIPanelCloseButton">
+                <Anchors>
+                    <Anchor point="TOPRIGHT">
+                        <Offset>
+                            <AbsDimension x="-5" y="-5"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        QDKP2GUI_EditDialog:Hide()
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="QDKP2_EditDialogFramePromoteButton" inherits="UIPanelButtonTemplate">
+                <NormalTexture file="Interface\Buttons\UI-ScrollBar-ScrollUpButton-Up"/>
+                <PushedTexture file="Interface\Buttons\UI-ScrollBar-ScrollUpButton-Down"/>
+                <DisabledTexture file="Interface\Buttons\UI-ScrollBar-ScrollUpButton-Disabled"/>
+                <Size>
+                    <AbsDimension x="24" y="20"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="QDKP2_EditDialogFrameRankLabel" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="140" y="8"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        QDKP2GUI_EditDialog:Promote()
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="QDKP2_EditDialogFrameDemoteButton" inherits="UIPanelButtonTemplate">
+                <NormalTexture file="Interface\Buttons\UI-ScrollBar-ScrollDownButton-Up"/>
+                <PushedTexture file="Interface\Buttons\UI-ScrollBar-ScrollDownButton-Down"/>
+                <DisabledTexture file="Interface\Buttons\UI-ScrollBar-ScrollDownButton-Disabled"/>
+                <Size>
+                    <AbsDimension x="24" y="20"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="QDKP2_EditDialogFramePromoteButton" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="-24" y="-16"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        QDKP2GUI_EditDialog:Demote()
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Frame name="QDKP2_EditDialogFramePublicNoteFrame">
+                <Size>
+                    <AbsDimension x="260" y="60"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="20" y="-120"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Frames>
+                    <ScrollFrame name="QDKP2_EditDialogFramePublicNoteScroll" inherits="UIPanelScrollFrameTemplate">
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="4" y="-4"/>
+                                </Offset>
+                            </Anchor>
+                            <Anchor point="BOTTOMRIGHT">
+                                <Offset>
+                                    <AbsDimension x="-28" y="4"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Backdrop bgFile="Interface\ChatFrame\ChatFrameBackground" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+                            <EdgeSize>
+                                <AbsValue val="16"/>
+                            </EdgeSize>
+                            <TileSize>
+                                <AbsValue val="16"/>
+                            </TileSize>
+                            <Color r="0" g="0" b="0" a="0.5"/>
+                        </Backdrop>
+                        <BackdropColor r="0" g="0" b="0" a="0.25"/>
+                        <BackdropBorderColor r="0.6" g="0.6" b="0.6"/>
+                        <ScrollChild>
+                            <EditBox name="QDKP2_EditDialogFramePublicNoteEdit" multiline="true" autoFocus="false">
+                                <TextInsets left="5" right="5" top="3" bottom="3"/>
+                                <Size>
+                                    <AbsDimension x="230" y="60"/>
+                                </Size>
+                                <FontString inherits="GameFontHighlightSmall"/>
+                                <Scripts>
+                                    <OnEscapePressed>self:ClearFocus();</OnEscapePressed>
+                                    <OnCursorChanged>ScrollingEdit_OnCursorChanged(self, x, y, w, h);</OnCursorChanged>
+                                    <OnUpdate>ScrollingEdit_OnUpdate(self, elapsed, self:GetParent());</OnUpdate>
+                                    <OnTextChanged>ScrollingEdit_OnTextChanged(self, self:GetParent());</OnTextChanged>
+                                </Scripts>
+                            </EditBox>
+                        </ScrollChild>
+                    </ScrollFrame>
+                </Frames>
+            </Frame>
+
+            <Frame name="QDKP2_EditDialogFrameOfficerNoteFrame">
+                <Size>
+                    <AbsDimension x="260" y="60"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="20" y="-195"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Frames>
+                    <ScrollFrame name="QDKP2_EditDialogFrameOfficerNoteScroll" inherits="UIPanelScrollFrameTemplate">
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="4" y="-4"/>
+                                </Offset>
+                            </Anchor>
+                            <Anchor point="BOTTOMRIGHT">
+                                <Offset>
+                                    <AbsDimension x="-28" y="4"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Backdrop bgFile="Interface\ChatFrame\ChatFrameBackground" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+                            <EdgeSize>
+                                <AbsValue val="16"/>
+                            </EdgeSize>
+                            <TileSize>
+                                <AbsValue val="16"/>
+                            </TileSize>
+                            <Color r="0" g="0" b="0" a="0.5"/>
+                        </Backdrop>
+                        <BackdropColor r="0" g="0" b="0" a="0.25"/>
+                        <BackdropBorderColor r="0.6" g="0.6" b="0.6"/>
+                        <ScrollChild>
+                            <EditBox name="QDKP2_EditDialogFrameOfficerNoteEdit" multiline="true" autoFocus="false">
+                                <TextInsets left="5" right="5" top="3" bottom="3"/>
+                                <Size>
+                                    <AbsDimension x="230" y="60"/>
+                                </Size>
+                                <FontString inherits="GameFontHighlightSmall"/>
+                                <Scripts>
+                                    <OnEscapePressed>self:ClearFocus();</OnEscapePressed>
+                                    <OnCursorChanged>ScrollingEdit_OnCursorChanged(self, x, y, w, h);</OnCursorChanged>
+                                    <OnUpdate>ScrollingEdit_OnUpdate(self, elapsed, self:GetParent());</OnUpdate>
+                                    <OnTextChanged>ScrollingEdit_OnTextChanged(self, self:GetParent());</OnTextChanged>
+                                </Scripts>
+                            </EditBox>
+                        </ScrollChild>
+                    </ScrollFrame>
+                </Frames>
+            </Frame>
+
+            <Button name="QDKP2_EditDialogFrameSaveButton" inherits="UIPanelButtonTemplate" text="Сохранить">
+                <Size>
+                    <AbsDimension x="100" y="25"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="BOTTOM">
+                        <Offset>
+                            <AbsDimension x="-55" y="55"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        QDKP2GUI_EditDialog:Save()
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="QDKP2_EditDialogFrameCancelButton" inherits="UIPanelButtonTemplate" text="Отмена">
+                <Size>
+                    <AbsDimension x="100" y="25"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="BOTTOM">
+                        <Offset>
+                            <AbsDimension x="55" y="55"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        QDKP2GUI_EditDialog:Hide()
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="QDKP2_EditDialogFrameRemoveButton" inherits="UIPanelButtonTemplate" text="Исключить">
+                <Size>
+                    <AbsDimension x="100" y="25"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="BOTTOM">
+                        <Offset>
+                            <AbsDimension x="-55" y="20"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnLoad>
+                        self:GetFontString():SetTextColor(1.0, 0.0, 0.0, 1)
+                    </OnLoad>
+                    <OnClick>
+                        QDKP2GUI_EditDialog:Remove()
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="QDKP2_EditDialogFrameInviteButton" inherits="UIPanelButtonTemplate" text="Пригласить">
+                <Size>
+                    <AbsDimension x="100" y="25"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="BOTTOM">
+                        <Offset>
+                            <AbsDimension x="55" y="20"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        QDKP2GUI_EditDialog:Invite()
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+
+        <Scripts>
+            <OnMouseDown>
+                self:StartMoving()
+            </OnMouseDown>
+            <OnMouseUp>
+                self:StopMovingOrSizing()
+            </OnMouseUp>
+        </Scripts>
+    </Frame>
+</Ui>
